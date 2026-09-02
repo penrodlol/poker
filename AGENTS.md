@@ -6,6 +6,14 @@ This is a custom card game (not standard poker) where players race to empty thei
 
 ---
 
+## Reference Documentation
+
+Detailed design docs live in [`docs/`](docs/). Consult them for implementation context:
+
+- [Database Schema Plan](docs/database-schema-plan.md) — tables, relations, and how the rules map to persistence.
+
+---
+
 ## Deck & Deal
 
 - Standard 52-card deck (no jokers).
