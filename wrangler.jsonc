@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "poker",
+  "compatibility_date": "2025-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "src/server/index.ts",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "poker",
+      "database_id": "449416be-33af-4e5b-af08-bfe3316d4a52",
+      "remote": true,
+      "migrations_dir": "drizzle/migrations",
+    },
+  ],
+}
