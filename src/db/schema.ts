@@ -14,6 +14,9 @@ export type Play = typeof play.$inferSelect;
 export type Plays = Array<Play>;
 export type PlayCard = typeof playCard.$inferSelect;
 export type PlayCards = Array<PlayCard>;
+export type Suite = (typeof gameCard.$inferSelect)['suit'];
+export type Rank = (typeof gameCard.$inferSelect)['rank'];
+export type PlayType = (typeof play.$inferSelect)['type'];
 
 const primaryKey = text()
   .primaryKey()
