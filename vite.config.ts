@@ -6,6 +6,7 @@ import { defineConfig } from 'vite';
 
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
+  server: { allowedHosts: ['.trycloudflare.com'] },
   plugins: [cloudflare({ viteEnvironment: { name: 'ssr' } }), tailwindcss(), tanstackStart(), viteReact()],
 });
 
