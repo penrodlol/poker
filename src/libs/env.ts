@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-const clientEnvSchema = z.object({ PUBLIC_DISCORD_CLIENT_ID: z.string() });
+const clientEnvSchema = z.object({ VITE_DISCORD_CLIENT_ID: z.string() });
 
 const serverEnvSchema = z.object({
   CLOUDFLARE_ACCOUNT_ID: z.string(),
