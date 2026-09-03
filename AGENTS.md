@@ -11,6 +11,14 @@ This is a custom card game (not standard poker) where players race to empty thei
 Detailed design docs live in [`docs/`](docs/). Consult them for implementation context:
 
 - [Database Schema Plan](docs/database-schema-plan.md) — tables, relations, and how the rules map to persistence.
+- [Technical Reference](docs/technical-reference.md) — central technical reference hub; how the app runs inside Discord as an embedded Activity and links to detailed topic docs.
+
+---
+
+## Coding Conventions
+
+- **Do not add comments to code.** Do not write inline comments, block comments, or doc comments. Write clear, self-explanatory code instead of explaining it with comments. Only add a comment if the user explicitly requests one.
+- **Prefer concise, inline syntax.** Omit curly braces where the language allows (e.g. single-statement `if`/`for` bodies, arrow functions with implicit returns). Keep expressions on a single line whenever it stays readable.
 
 ---
 
