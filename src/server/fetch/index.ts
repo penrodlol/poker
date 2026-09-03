@@ -1,11 +1,10 @@
 import { logError } from '#/server/utils/logger';
 import tanstack from '@tanstack/react-start/server-entry';
-import { env } from 'cloudflare:workers';
 import { z } from 'zod';
 
 export const FETCH_ERROR = 'Error Processing Fetch';
 
-const handler: ExportedHandler<Env>['fetch'] = async (request) => {
+const handler: ExportedHandler<Env>['fetch'] = async (request, env) => {
   try {
     const response = await tanstack.fetch(request);
     const headers = new Headers(response.headers);
