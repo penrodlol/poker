@@ -68,7 +68,7 @@ This is the sequence every session runs through:
 
 ## 5. Suggested phased roadmap
 
-1. **Phase 1 — Boot the Activity.** Fix `discord.ts`, add a client-side SDK provider, get `ready()` + `authorize()` + server token exchange + `authenticate()` working; render the authenticated user's name in the SPA.
+1. **Phase 1 — Boot the Activity.** Fix `discord.ts`, add a client-side SDK provider, get `ready()` + `authorize()` + server token exchange + `authenticate()` working; render the authenticated user's name in the SPA. See [Phase 1 — Boot the Activity & Auth Plan](phase-1-boot-activity-auth-plan.md).
 2. **Phase 2 — Channel → game binding.** On auth, upsert `player`, resolve/create the `game` for the channel, and join the user as a `game_player`.
 3. **Phase 3 — Game API + realtime.** Implement deal/play/pass endpoints enforcing the rules, plus a sync mechanism (polling first, then SDK activity events / Durable Object for realtime).
 4. **Phase 4 — UI.** Build the table/hand UI and wire it to the API.

@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router';
 import { I18nProvider, useLocale } from 'react-aria-components/I18nProvider';
 import css from '../styles.css?url';
+import { DiscordProvider } from './-_discord';
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -28,9 +29,11 @@ function ShellContent(props: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <header></header>
-        <main {...props} />
-        <footer></footer>
+        <DiscordProvider>
+          <header></header>
+          <main {...props} />
+          <footer></footer>
+        </DiscordProvider>
         <Scripts />
       </body>
     </html>
