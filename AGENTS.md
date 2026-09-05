@@ -13,6 +13,8 @@ Detailed design docs live in [`docs/`](docs/). Consult them for implementation c
 - [Database Schema Plan](docs/database-schema-plan.md) — tables, relations, and how the rules map to persistence.
 - [Technical Reference](docs/technical-reference.md) — central technical reference hub; how the app runs inside Discord as an embedded Activity and links to detailed topic docs.
 - [Phase 1 — Boot the Activity & Auth Plan](docs/phase-1-boot-activity-auth-plan.md) — implementation plan for the Discord Activity launch and OAuth handshake.
+- [Phase 2 — Lobby: Upsert Players & Launch](docs/phase-2-lobby-launch-plan.md) — implementation plan for the lobby, host-only launch, seating players, and dealing the deck.
+- [Phase 3 — Game API + Realtime](docs/phase-3-game-api-realtime-plan.md) — implementation plan for the play/pass rules engine and PartyServer realtime relay.
 
 ---
 
