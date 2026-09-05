@@ -42,14 +42,13 @@ A Discord user. Persists across games so stats/history can be tracked.
 
 ### 2. `game`
 
-A single game session, scoped to where it was launched in Discord.
+A single game session, scoped to where it was launched in Discord. Only one game exists per channel at a time — launching a new game wipes the previous one and its rows. Deleting a `game` cascades to `game_player`, `game_card`, `play`, and `play_card` (`ON DELETE CASCADE`); the `game.current_turn_player_id` / `game.current_play_id` back-pointers use `ON DELETE SET NULL` to avoid a delete cycle.
 
 | Column                   | Type                  | Notes                                                |
 | ------------------------ | --------------------- | ---------------------------------------------------- |
 | `id`                     | text (PK)             | UUID                                                 |
 | `guild_id`               | text                  | Discord server (guild) snowflake                     |
-| `channel_id`             | text                  | Discord channel snowflake                            |
-| `status`                 | text                  | `waiting` \| `in_progress` \| `finished`             |
+| `channel_id`             | text                  | Discord channel snowflake, **unique**                |
 | `current_round`          | integer               | Increments each new round                            |
 | `current_turn_player_id` | fk → `game_player.id` | Whose turn it is (nullable)                          |
 | `current_play_id`        | fk → `play.id`        | The active table play to beat (nullable = free play) |

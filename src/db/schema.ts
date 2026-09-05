@@ -14,9 +14,12 @@ export type Play = typeof play.$inferSelect;
 export type Plays = Array<Play>;
 export type PlayCard = typeof playCard.$inferSelect;
 export type PlayCards = Array<PlayCard>;
-export type Suite = (typeof gameCard.$inferSelect)['suit'];
-export type Rank = (typeof gameCard.$inferSelect)['rank'];
+export type CardSuite = (typeof gameCard.$inferSelect)['suit'];
+export type CardRank = (typeof gameCard.$inferSelect)['rank'];
 export type PlayType = (typeof play.$inferSelect)['type'];
+
+export const CARD_RANKS = ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'] as const;
+export const CARD_SUITS = ['diamonds', 'clubs', 'hearts', 'spades'] as const;
 
 const primaryKey = text()
   .primaryKey()
@@ -46,27 +49,24 @@ export const game = sqliteTable(
     id: primaryKey,
     guildId: text('guild_id').notNull(),
     channelId: text('channel_id').notNull(),
-    status: text({ enum: ['waiting', 'in_progress', 'finished'] })
-      .notNull()
-      .default('waiting'),
     currentRound: integer('current_round').notNull().default(0),
-    currentTurnPlayerId: foreignKey('current_turn_player_id', (): AnySQLiteColumn => gamePlayer.id),
-    currentPlayId: foreignKey('current_play_id', (): AnySQLiteColumn => play.id),
     createdAt: timestamp('created_at'),
+    currentTurnPlayerId: foreignKey('current_turn_player_id', (): AnySQLiteColumn => gamePlayer.id, { onDelete: 'set null' }),
+    currentPlayId: foreignKey('current_play_id', (): AnySQLiteColumn => play.id, { onDelete: 'set null' }),
   },
-  (table) => [index('game_channel_id_status_idx').on(table.channelId, table.status)],
+  (table) => [uniqueIndex('game_channel_id_idx').on(table.channelId)],
 );
 
 export const gamePlayer = sqliteTable(
   'game_player',
   {
     id: primaryKey,
-    gameId: foreignKey('game_id', (): AnySQLiteColumn => game.id).notNull(),
-    playerId: foreignKey('player_id', () => player.id).notNull(),
     seat: integer().notNull(),
     isLockedOut: integer('is_locked_out', { mode: 'boolean' }).notNull().default(false),
     placement: integer(),
     createdAt: timestamp('created_at'),
+    gameId: foreignKey('game_id', (): AnySQLiteColumn => game.id, { onDelete: 'cascade' }).notNull(),
+    playerId: foreignKey('player_id', () => player.id).notNull(),
   },
   (table) => [
     uniqueIndex('game_player_game_id_player_id_idx').on(table.gameId, table.playerId),
@@ -78,12 +78,11 @@ export const gameCard = sqliteTable(
   'game_card',
   {
     id: primaryKey,
-    gameId: foreignKey('game_id', () => game.id).notNull(),
-    // null once the card has been played (i.e. on the table)
-    gamePlayerId: foreignKey('game_player_id', () => gamePlayer.id),
-    rank: text({ enum: ['3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2'] }).notNull(),
-    suit: text({ enum: ['diamonds', 'clubs', 'hearts', 'spades'] }).notNull(),
+    rank: text({ enum: CARD_RANKS }).notNull(),
+    suit: text({ enum: CARD_SUITS }).notNull(),
     createdAt: timestamp('created_at'),
+    gameId: foreignKey('game_id', () => game.id, { onDelete: 'cascade' }).notNull(),
+    gamePlayerId: foreignKey('game_player_id', () => gamePlayer.id, { onDelete: 'set null' }),
   },
   (table) => [index('game_card_game_id_game_player_id_idx').on(table.gameId, table.gamePlayerId)],
 );
@@ -92,21 +91,21 @@ export const play = sqliteTable(
   'play',
   {
     id: primaryKey,
-    gameId: foreignKey('game_id', (): AnySQLiteColumn => game.id).notNull(),
-    gamePlayerId: foreignKey('game_player_id', (): AnySQLiteColumn => gamePlayer.id).notNull(),
     round: integer().notNull(),
     type: text({ enum: ['single', 'pair', 'straight', 'flush', 'full_house', 'straight_flush'] }),
     isPass: integer('is_pass', { mode: 'boolean' }).notNull().default(false),
-    beatsPlayId: foreignKey('beats_play_id', (): AnySQLiteColumn => play.id),
     createdAt: timestamp('created_at'),
+    gameId: foreignKey('game_id', (): AnySQLiteColumn => game.id, { onDelete: 'cascade' }).notNull(),
+    gamePlayerId: foreignKey('game_player_id', (): AnySQLiteColumn => gamePlayer.id, { onDelete: 'cascade' }).notNull(),
+    beatsPlayId: foreignKey('beats_play_id', (): AnySQLiteColumn => play.id, { onDelete: 'set null' }),
   },
   (table) => [index('play_game_id_round_created_at_idx').on(table.gameId, table.round, table.createdAt)],
 );
 
 export const playCard = sqliteTable('play_card', {
   id: primaryKey,
-  playId: foreignKey('play_id', (): AnySQLiteColumn => play.id).notNull(),
-  gameCardId: foreignKey('game_card_id', (): AnySQLiteColumn => gameCard.id)
+  playId: foreignKey('play_id', (): AnySQLiteColumn => play.id, { onDelete: 'cascade' }).notNull(),
+  gameCardId: foreignKey('game_card_id', (): AnySQLiteColumn => gameCard.id, { onDelete: 'cascade' })
     .notNull()
     .unique(),
 });
