@@ -1,11 +1,15 @@
 import { logError } from '#/server/utils/logger';
 import tanstack from '@tanstack/react-start/server-entry';
+import { routePartykitRequest } from 'partyserver';
 import { z } from 'zod';
 
 export const FETCH_ERROR = 'Error Processing Fetch';
 
 const handler: ExportedHandler<Env>['fetch'] = async (request, env) => {
   try {
+    const durableObjectResponse = await routePartykitRequest(request, env);
+    if (durableObjectResponse) return durableObjectResponse;
+
     const response = await tanstack.fetch(request);
     const headers = new Headers(response.headers);
     headers.delete('X-Frame-Options');

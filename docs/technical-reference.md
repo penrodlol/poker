@@ -70,6 +70,6 @@ This is the sequence every session runs through:
 
 - [x] **Phase 1 — Boot the Activity.** Fix `discord.ts`, add a client-side SDK provider, get `ready()` + `authorize()` + server token exchange + `authenticate()` working; render the authenticated user's name in the SPA. See [Phase 1 — Boot the Activity & Auth Plan](phase-1-boot-activity-auth-plan.md).
 - [x] **Phase 2 — Lobby: upsert players & launch.** Show the participants connected to the Activity instance and a host-only launch button that, when pressed, upserts the connected users as `player`s, creates the `game` for the channel, seats them as `game_player`s (random order), and deals the shuffled deck into `game_card`s. See [Phase 2 — Lobby: Upsert Players & Launch](phase-2-lobby-launch-plan.md).
-- [ ] **Phase 3 — Game API + realtime.** Implement play/pass endpoints enforcing the rules (dealing already happens at launch), plus a sync mechanism (polling first, then SDK activity events / Durable Object for realtime).
+- [x] **Phase 3 — Game API + realtime.** `playGameMove` / `passGameMove` / `getGameState` enforce the rules (dealing happens at launch), with realtime sync via a **PartyServer** Durable Object per channel (`GameChannelDurableObject`) that broadcasts an `update` signal; clients refetch on each signal. See [Phase 3 — Game API + Realtime](phase-3-game-api-realtime-plan.md).
 - [ ] **Phase 4 — UI.** Build the table/hand UI and wire it to the API.
 - [ ] **Phase 5 — Deploy + portal config.** Finalize URL mappings, CSP, and Activity settings; test in a real voice channel.

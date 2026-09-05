@@ -15,4 +15,6 @@
       "migrations_dir": "drizzle/migrations",
     },
   ],
+  "durable_objects": { "bindings": [{ "class_name": "GameChannelDurableObject", "name": "GameChannelDurableObject" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["GameChannelDurableObject"] }],
 }

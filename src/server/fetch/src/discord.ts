@@ -3,6 +3,7 @@ import { logError } from '#/server/utils/logger';
 import { createServerFn } from '@tanstack/react-start';
 import { env } from 'cloudflare:workers';
 import { eq, sql } from 'drizzle-orm';
+import { getServerByName } from 'partyserver';
 import { z } from 'zod';
 
 export type GetDiscordAccessTokenRequest = z.infer<typeof getDiscordAccessTokenRequestSchema>;
@@ -77,7 +78,8 @@ export const startDiscordGame = createServerFn({ method: 'POST' })
         .map(({ card }) => card);
       const gameDeckPlayerCardsAmount = gamePlayers.length * Math.floor(gameDeck.length / gamePlayers.length);
       const gameDeckThreeOfDiamondsIndex = gameDeckShuffled.findIndex((card) => card.rank === '3' && card.suit === 'diamonds');
-      if (gameDeckThreeOfDiamondsIndex >= gameDeckPlayerCardsAmount)
+      const gameDeckThreeOfDiamondsIsDiscarded = gameDeckThreeOfDiamondsIndex >= gameDeckPlayerCardsAmount;
+      if (gameDeckThreeOfDiamondsIsDiscarded)
         [gameDeckShuffled[0], gameDeckShuffled[gameDeckThreeOfDiamondsIndex]] = [
           gameDeckShuffled[gameDeckThreeOfDiamondsIndex],
           gameDeckShuffled[0],
@@ -91,7 +93,19 @@ export const startDiscordGame = createServerFn({ method: 'POST' })
       }));
       for (let index = 0; index < gameCards.length; index += 20) await db.insert(gameCard).values(gameCards.slice(index, index + 20));
 
-      return discordGame;
+      const gameCurrentRound = 1;
+      const gameCurrentTurnPlayerId =
+        gamePlayers[gameDeckThreeOfDiamondsIsDiscarded ? 0 : gameDeckThreeOfDiamondsIndex % gamePlayers.length].id;
+
+      const startedGame = await db
+        .update(game)
+        .set({ currentRound: gameCurrentRound, currentTurnPlayerId: gameCurrentTurnPlayerId })
+        .where(eq(game.id, discordGame.id))
+        .returning()
+        .get();
+
+      await (await getServerByName(env.GameChannelDurableObject, data.channelId)).notify();
+      return startedGame;
     } catch (error) {
       logError(START_DISCORD_GAME_ERROR, { error });
       throw new Error(START_DISCORD_GAME_ERROR);
