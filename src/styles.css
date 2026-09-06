@@ -1,2 +1,2 @@
 @import 'tailwindcss';
-@plugin 'tailwindcss-react-aria-components';
+@import '@heroui/styles';

@@ -1,6 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router';
-import { I18nProvider, useLocale } from 'react-aria-components/I18nProvider';
 import css from '../styles.css?url';
 import { DiscordProvider } from './-_discord';
 
@@ -14,17 +13,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function Shell(props: { children: React.ReactNode }) {
   return (
-    <I18nProvider>
-      <ShellContent {...props} />
-    </I18nProvider>
-  );
-}
-
-function ShellContent(props: { children: React.ReactNode }) {
-  const { locale, direction } = useLocale();
-
-  return (
-    <html lang={locale} dir={direction} suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

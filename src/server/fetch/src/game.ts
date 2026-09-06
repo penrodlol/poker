@@ -48,7 +48,7 @@ export const getGameState = createServerFn({ method: 'POST' })
         with: {
           players: {
             columns: { id: true, seat: true, isLockedOut: true, placement: true },
-            with: { player: { columns: { discordId: true, username: true } } },
+            with: { player: { columns: { discordId: true, username: true, avatarUrl: true } } },
             orderBy: (players, { asc }) => asc(players.seat),
           },
           cards: { columns: { id: true, rank: true, suit: true, gamePlayerId: true } },
@@ -63,6 +63,7 @@ export const getGameState = createServerFn({ method: 'POST' })
         seat: p.seat,
         discordId: p.player.discordId,
         username: p.player.username,
+        avatarUrl: p.player.avatarUrl,
         isLockedOut: p.isLockedOut,
         placement: p.placement,
         handCount: currentGame.cards.filter((c) => c.gamePlayerId === p.id).length,
