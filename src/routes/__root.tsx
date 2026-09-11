@@ -1,3 +1,4 @@
+import { ToastProvider } from '@heroui/react/toast';
 import type { QueryClient } from '@tanstack/react-query';
 import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router';
 import css from '../styles.css?url';
@@ -13,16 +14,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function Shell(props: { children: React.ReactNode }) {
   return (
-    <html lang="en" dir="ltr" suppressHydrationWarning>
+    <html lang="en" dir="ltr" suppressHydrationWarning className="dark">
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="to-surface via-surface-secondary from-surface-tertiary flex min-h-svh flex-col bg-radial">
         <DiscordProvider>
           <header></header>
-          <main {...props} />
+          <main className="flex-1" {...props} />
           <footer></footer>
         </DiscordProvider>
+        <ToastProvider placement="top" />
         <Scripts />
       </body>
     </html>

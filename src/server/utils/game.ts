@@ -1,4 +1,4 @@
-import { CARD_RANKS, CARD_SUITS, type CardRank, type CardSuite } from '#/db';
+import { CARD_RANKS, CARD_SUITS, type CardRank, type CardSuite } from '#/db/schema';
 
 export type GameHandType = 'single' | 'pair' | 'straight' | 'flush' | 'full_house' | 'straight_flush';
 export type GameHandCard = { rank: CardRank; suit: CardSuite };
@@ -8,6 +8,10 @@ const GAME_FIVE_CARD_TYPES = ['straight', 'flush', 'full_house', 'straight_flush
 
 const gameCardValue = (card: GameHandCard) => CARD_RANKS.indexOf(card.rank) * CARD_SUITS.length + CARD_SUITS.indexOf(card.suit);
 const gameFiveCardRank = (type: GameHandType) => (GAME_FIVE_CARD_TYPES as ReadonlyArray<GameHandType>).indexOf(type);
+
+export function sortGameCards<T extends GameHandCard>(cards: Array<T>): Array<T> {
+  return [...cards].sort((a, b) => gameCardValue(a) - gameCardValue(b));
+}
 
 export function evaluateGameHand(cards: Array<GameHandCard>): GameEvaluatedHand | null {
   if (cards.length === 1) return { type: 'single', strength: gameCardValue(cards[0]) };
