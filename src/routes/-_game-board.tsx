@@ -54,7 +54,8 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
     const players = [...game.players].sort((a, b) => a.seat - b.seat);
     const selfIndex = players.findIndex((player) => player.gamePlayerId === game.player?.gamePlayerId);
     const ordered = selfIndex <= 0 ? players : [...players.slice(selfIndex), ...players.slice(0, selfIndex)];
-    return ordered.map((player, index) => ({ player, ...getPlayerPosition(tableSize, index / ordered.length, 14) }));
+    const seats = ordered.map((player, index) => ({ player, ...getPlayerPosition(tableSize, index / ordered.length, 14) }));
+    return { seats, currentTurnPlayerSeat: seats.find(({ player }) => player.isCurrentTurn) ?? null };
   }, [game.players, game.player?.gamePlayerId, tableSize]);
 
   const selectPlayingCards = useCallback(() => {
@@ -140,7 +141,7 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
               </Button>
             </div>
           )}
-          {playerSeats.map(({ player, x, y }) => (
+          {playerSeats.seats.map(({ player, x, y }) => (
             <div key={player.gamePlayerId} style={{ left: `${x}px`, top: `${y}px` }} className="absolute -translate-x-1/2 -translate-y-1/2">
               <Tooltip delay={0}>
                 <Tooltip.Trigger
@@ -155,15 +156,16 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
                       avatarHash={player.avatarUrl}
                       className={cn(
                         'elevation-3 pointer-events-none size-20 rounded-4xl select-none',
-                        (player.isCurrentTurn || gameOver?.discordId === player.discordId) && 'ring-accent ring-4',
-                        (player.isLockedOut || (gameOver && gameOver?.discordId !== player.discordId)) && 'brightness-50 grayscale',
+                        (!player.isCurrentTurn || player.isLockedOut || (gameOver && gameOver?.discordId !== player.discordId)) &&
+                          'brightness-50 grayscale',
                       )}
                     />
                     <Badge
                       size="lg"
                       className={cn(
                         'elevation-3',
-                        (player.isLockedOut || (gameOver && gameOver?.discordId !== player.discordId)) && 'brightness-50 grayscale',
+                        (!player.isCurrentTurn || player.isLockedOut || (gameOver && gameOver?.discordId !== player.discordId)) &&
+                          'brightness-50 grayscale',
                       )}
                     >
                       {player.handCount}
@@ -180,6 +182,17 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
               </Tooltip>
             </div>
           ))}
+          {playerSeats.currentTurnPlayerSeat && !gameOver && (
+            <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-full">
+              <div
+                style={{ top: playerSeats.currentTurnPlayerSeat.y, left: playerSeats.currentTurnPlayerSeat.x }}
+                className={cn(
+                  'absolute size-96 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl',
+                  'from-accent bg-radial to-transparent to-50% motion-safe:animate-pulse',
+                )}
+              />
+            </div>
+          )}
         </Surface>
         {!game.isObserver && (
           <div className="flex w-full flex-col items-center justify-center gap-12">
