@@ -150,7 +150,7 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
               <Tooltip delay={0}>
                 <Tooltip.Trigger
                   aria-label={player.username}
-                  className="focus-visible:ring-accent size-20 rounded-4xl focus-visible:ring-2 focus-visible:outline-none"
+                  className="focus-visible:ring-accent relative size-20 rounded-4xl focus-visible:ring-2 focus-visible:outline-none"
                 >
                   <Badge.Anchor>
                     <PlayerAvatar
@@ -159,11 +159,16 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
                       username={player.username}
                       avatarHash={player.avatarUrl}
                       className={cn(
-                        'elevation-3 pointer-events-none size-20 rounded-4xl select-none',
+                        'elevation-3 pointer-events-none size-20 rounded-4xl select-none *:bg-white',
                         (!player.isCurrentTurn || player.isLockedOut || (gameOver && gameOver?.discordId !== player.discordId)) &&
-                          'brightness-50 grayscale',
+                          'brightness-20 grayscale',
                       )}
                     />
+                    {player.isLockedOut && (
+                      <Typography weight="bold" className="text-danger absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                        Pass
+                      </Typography>
+                    )}
                     <Badge
                       size="lg"
                       className={cn(
@@ -246,7 +251,7 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
                 fullWidth
                 className="elevation-3 h-12"
                 isDisabled={!game.player?.isCurrentTurn || selectedPlayingCardIds.length === 0 || !!gameOver}
-                isPending={isPlaying}
+                isPending={isPlaying && !gameOver}
                 onClick={selectPlayingCards}
               >
                 {({ isPending }) => (
