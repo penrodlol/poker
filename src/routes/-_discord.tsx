@@ -1,15 +1,19 @@
 import discord, { discordClientId, discordClientScopes } from '#/libs/discord';
 import { getDiscordAccessToken } from '#/server/fetch/src/discord';
+import type { GameChannelMessage, GameChannelMessageDataGameOver } from '#/server/fetch/src/game-channel';
 import type { DiscordSDK } from '@discord/embedded-app-sdk';
 import { useServerFn } from '@tanstack/react-start';
 import { usePartySocket } from 'partysocket/react';
 import { createContext, use, useEffect, useRef, useState } from 'react';
-import { z } from 'zod';
 
 export type DiscordUser = Awaited<ReturnType<DiscordSDK['commands']['authenticate']>>['user'];
 export type DiscordParticipant = Awaited<ReturnType<DiscordSDK['commands']['getInstanceConnectedParticipants']>>['participants'][number];
 export type DiscordStatus = 'loading' | 'ready' | 'error';
-export type UseDiscordRealtimeProps = { channelId: string | undefined; onUpdate: () => void };
+export type UseDiscordRealtimeProps = {
+  channelId: string | undefined;
+  onUpdate: () => void;
+  onGameOver: (winner: GameChannelMessageDataGameOver) => void;
+};
 
 export type DiscordContextValue = {
   status: DiscordStatus;
@@ -25,15 +29,22 @@ export function useDiscord() {
   return { ...context, ready: context.status === 'ready' && !!discord.channelId && !!discord.guildId };
 }
 
-export const useDiscordRealtime = ({ channelId, onUpdate }: UseDiscordRealtimeProps) =>
+export const useDiscordRealtime = ({ channelId, onUpdate, onGameOver }: UseDiscordRealtimeProps) =>
   usePartySocket({
     host: `${discordClientId}.discordsays.com`,
     prefix: '.proxy/parties',
     party: 'game-channel-durable-object',
     room: channelId,
     onMessage(event) {
-      const message = z.object({ type: z.string() }).safeParse(JSON.parse(event.data));
-      if (message.success && message.data.type === 'update') onUpdate();
+      const message = JSON.parse(event.data) as GameChannelMessage;
+      switch (message.type) {
+        case 'update':
+          return onUpdate();
+        case 'gameover':
+          return onGameOver(message.data);
+        default:
+          return;
+      }
     },
   });
 

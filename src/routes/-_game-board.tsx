@@ -1,7 +1,8 @@
 import PlayerAvatar from '#/components/player-avatar';
 import PlayingCard from '#/components/playing-card';
-import { useResizeObserver } from '#/libs/hooks';
+import { useConfetti, useResizeObserver } from '#/libs/hooks';
 import type { GetGameStateResponse } from '#/server/fetch/src/game';
+import type { GameChannelMessageDataGameOver } from '#/server/fetch/src/game-channel';
 import { sortGameCards } from '#/server/utils/game';
 import { Badge, Button, Chip, cn, Spinner, Surface, toast, Tooltip, Typography } from '@heroui/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -9,11 +10,13 @@ import { flushSync } from 'react-dom';
 
 export type GameBoardProps = {
   game: NonNullable<GetGameStateResponse['data']>;
+  gameOver?: GameChannelMessageDataGameOver;
   onPlay: (playingCardIds: Array<string>, onError: () => void) => void;
   onPass: (onSettled: () => void) => void;
+  onReturnToMenu: () => void;
 };
 
-export default function GameBoard({ game, onPlay, onPass }: GameBoardProps) {
+export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMenu }: GameBoardProps) {
   const observerToastRef = useRef<string | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   const tableSize = useResizeObserver(tableRef);
@@ -25,6 +28,8 @@ export default function GameBoard({ game, onPlay, onPass }: GameBoardProps) {
 
   const currentPlayCards = (game.currentPlay?.cards ?? []).map((c) => `${c.suit}-${c.rank}`).join(',');
   const playerHand = useMemo(() => game.hand.filter((c) => !playedPlayingCardIds.includes(c.id)), [game.hand, playedPlayingCardIds]);
+
+  useConfetti(!!gameOver);
 
   useEffect(() => {
     setPlayedPlayingCardIds([]);
@@ -117,6 +122,24 @@ export default function GameBoard({ game, onPlay, onPass }: GameBoardProps) {
               ))}
             </div>
           )}
+          {gameOver && (
+            <div
+              className={cn(
+                'absolute inset-0 flex flex-col items-center gap-6 rounded-full bg-black/40 py-20',
+                'opacity-100 motion-safe:transition-opacity starting:opacity-0',
+              )}
+            >
+              <Typography weight="bold" className="text-6xl">
+                {gameOver.username} wins!
+              </Typography>
+              <Typography color="muted" className="text-2xl">
+                {gameOver.discordId === game.player?.discordId ? 'Congratulations!' : 'Better luck next time bud!'}
+              </Typography>
+              <Button size="lg" className="elevation-3 mt-auto" onClick={onReturnToMenu}>
+                Return to Menu
+              </Button>
+            </div>
+          )}
           {playerSeats.map(({ player, x, y }) => (
             <div key={player.gamePlayerId} style={{ left: `${x}px`, top: `${y}px` }} className="absolute -translate-x-1/2 -translate-y-1/2">
               <Tooltip delay={0}>
@@ -132,11 +155,17 @@ export default function GameBoard({ game, onPlay, onPass }: GameBoardProps) {
                       avatarHash={player.avatarUrl}
                       className={cn(
                         'elevation-3 pointer-events-none size-20 rounded-4xl select-none',
-                        player.isCurrentTurn && 'ring-accent ring-4',
-                        player.isLockedOut && 'brightness-50 grayscale',
+                        (player.isCurrentTurn || gameOver?.discordId === player.discordId) && 'ring-accent ring-4',
+                        (player.isLockedOut || (gameOver && gameOver?.discordId !== player.discordId)) && 'brightness-50 grayscale',
                       )}
                     />
-                    <Badge size="lg" className={cn('elevation-3', player.isLockedOut && 'brightness-50 grayscale')}>
+                    <Badge
+                      size="lg"
+                      className={cn(
+                        'elevation-3',
+                        (player.isLockedOut || (gameOver && gameOver?.discordId !== player.discordId)) && 'brightness-50 grayscale',
+                      )}
+                    >
                       {player.handCount}
                     </Badge>
                   </Badge.Anchor>
@@ -159,7 +188,7 @@ export default function GameBoard({ game, onPlay, onPass }: GameBoardProps) {
                 <Button
                   key={card.id}
                   aria-label={`${card.rank} of ${card.suit}`}
-                  isDisabled={!game.player?.isCurrentTurn}
+                  isDisabled={!game.player?.isCurrentTurn || !!gameOver}
                   onClick={() =>
                     setSelectedPlayingCardIds((p) => (p.includes(card.id) ? p.filter((id) => id !== card.id) : [...p, card.id]))
                   }
@@ -184,7 +213,7 @@ export default function GameBoard({ game, onPlay, onPass }: GameBoardProps) {
                 fullWidth
                 className="elevation-3 h-12"
                 isPending={isPassing}
-                isDisabled={!game.player?.isCurrentTurn}
+                isDisabled={!game.player?.isCurrentTurn || !!gameOver}
                 onClick={() => (setIsPassing(true), onPass(() => setIsPassing(false)))}
               >
                 {({ isPending }) => (
@@ -199,7 +228,7 @@ export default function GameBoard({ game, onPlay, onPass }: GameBoardProps) {
                 size="lg"
                 fullWidth
                 className="elevation-3 h-12"
-                isDisabled={!game.player?.isCurrentTurn || selectedPlayingCardIds.length === 0}
+                isDisabled={!game.player?.isCurrentTurn || selectedPlayingCardIds.length === 0 || !!gameOver}
                 isPending={isPlaying}
                 onClick={selectPlayingCards}
               >

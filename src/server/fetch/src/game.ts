@@ -7,6 +7,7 @@ import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { BatchItem } from 'drizzle-orm/batch';
 import { getServerByName } from 'partyserver';
 import { z } from 'zod';
+import type { GameChannelMessageDataGameOver } from './game-channel';
 
 export type StartGameRequest = z.infer<typeof startGameRequestSchema>;
 export type StartGameResponse = NonNullable<Awaited<ReturnType<typeof startGame>>>;
@@ -189,7 +190,7 @@ export const playGameMove = createServerFn({ method: 'POST' })
         with: {
           players: {
             columns: { id: true, seat: true, isLockedOut: true, placement: true },
-            with: { player: { columns: { discordId: true } }, cards: { columns: { id: true, rank: true, suit: true } } },
+            with: { player: { columns: { discordId: true, username: true } }, cards: { columns: { id: true, rank: true, suit: true } } },
           },
           plays: { columns: { id: true }, limit: 1 },
           currentPlay: {
@@ -222,10 +223,6 @@ export const playGameMove = createServerFn({ method: 'POST' })
 
       const gameFinished = gamePlayerSelf.cards.length === gameCards.length;
       const gamePlayerSelfPlacement = gameFinished ? currentGame.players.filter((p) => p.placement !== null).length + 1 : null;
-      const gamePlayersPlacements = currentGame.players.map((p) => {
-        const placement = p.id === gamePlayerSelf.id ? gamePlayerSelfPlacement : p.placement;
-        return { ...p, placement };
-      });
 
       const gamePlayId = crypto.randomUUID();
       const gameWrites: [BatchItem<'sqlite'>, ...Array<BatchItem<'sqlite'>>] = [
@@ -241,15 +238,26 @@ export const playGameMove = createServerFn({ method: 'POST' })
         db.update(gameCard).set({ gamePlayerId: null }).where(inArray(gameCard.id, data.cardIds)),
         db
           .update(game)
-          .set({ currentPlayId: gamePlayId, currentTurnPlayerId: getGameNextEligiblePlayerId(gamePlayerSelf.id, gamePlayersPlacements) })
+          .set({
+            currentPlayId: gamePlayId,
+            currentTurnPlayerId: gameFinished ? null : getGameNextEligiblePlayerId(gamePlayerSelf.id, currentGame.players),
+          })
           .where(eq(game.id, currentGame.id)),
       ];
       if (gameFinished)
         gameWrites.push(db.update(gamePlayer).set({ placement: gamePlayerSelfPlacement }).where(eq(gamePlayer.id, gamePlayerSelf.id)));
       await db.batch(gameWrites);
+
+      if (gameFinished) {
+        const realtimeData: GameChannelMessageDataGameOver = { discordId: data.discordId, username: gamePlayerSelf.player.username };
+        await db.delete(game).where(eq(game.id, currentGame.id));
+        await (await getServerByName(env.GameChannelDurableObject, data.channelId)).notify({ type: 'gameover', data: realtimeData });
+        return { gameId: currentGame.id, type: gameCardsEvaluated.type, finished: true };
+      }
+
       await (await getServerByName(env.GameChannelDurableObject, data.channelId)).notify();
 
-      return { gameId: currentGame.id, type: gameCardsEvaluated.type, finished: gameFinished };
+      return { gameId: currentGame.id, type: gameCardsEvaluated.type, finished: false };
     } catch (error) {
       logError(PLAY_GAME_MOVE_ERROR, { error });
       throw new Error(PLAY_GAME_MOVE_ERROR, { cause: error });
