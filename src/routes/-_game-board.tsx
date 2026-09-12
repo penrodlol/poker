@@ -188,7 +188,7 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
                 style={{ top: playerSeats.currentTurnPlayerSeat.y, left: playerSeats.currentTurnPlayerSeat.x }}
                 className={cn(
                   'absolute size-96 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl',
-                  'from-accent bg-radial to-transparent to-50% motion-safe:animate-pulse',
+                  'from-accent bg-radial to-transparent to-60% motion-safe:animate-pulse',
                 )}
               />
             </div>
