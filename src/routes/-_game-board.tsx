@@ -71,12 +71,12 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
   }, [selectedPlayingCardIds, setPlayedPlayingCardIds, setSelectedPlayingCardIds, onPlay]);
 
   return (
-    <section className="flex min-h-svh flex-col items-center justify-center bg-radial from-neutral-800 to-neutral-950 p-12">
-      <div className="flex w-full max-w-[calc(var(--container-7xl)+var(--spacing)*20)] flex-col items-center justify-center gap-20">
+    <section className="flex h-svh flex-col items-center justify-center bg-radial from-neutral-800 to-neutral-950 p-12">
+      <div className="flex min-h-0 w-full max-w-[calc(var(--container-7xl)+var(--spacing)*20)] flex-1 flex-col items-center justify-center gap-20">
         <Surface
           ref={tableRef}
           className={cn(
-            'elevation-3 relative h-180 w-full rounded-full',
+            'elevation-3 relative max-h-180 min-h-130 w-full flex-1 rounded-full',
             'from-surface-tertiary via-surface-secondary to-surface border-28 border-[oklch(0.3541_0.0182_47.82)] bg-radial',
             'before:absolute before:-inset-4 before:rounded-[inherit] before:border-4 before:border-white/5 before:content-[""]',
           )}

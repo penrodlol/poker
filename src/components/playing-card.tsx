@@ -10,7 +10,7 @@ export type PlayingCardVariants = VariantProps<typeof playingCardVariants>;
 export const playingCardVariants = tv({
   base: 'rounded-lg bg-neutral-200 p-1 select-none',
   defaultVariants: { size: 'md' },
-  variants: { size: { sm: 'w-16', md: 'w-24', lg: 'w-32' } },
+  variants: { size: { sm: 'w-14', md: 'w-22', lg: 'w-30' } },
 });
 
 export default function PlayingCard({ className, size, rank, suit, ...props }: PlayingCardProps) {
