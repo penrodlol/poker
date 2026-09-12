@@ -54,7 +54,7 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
     const players = [...game.players].sort((a, b) => a.seat - b.seat);
     const selfIndex = players.findIndex((player) => player.gamePlayerId === game.player?.gamePlayerId);
     const ordered = selfIndex <= 0 ? players : [...players.slice(selfIndex), ...players.slice(0, selfIndex)];
-    const seats = ordered.map((player, index) => ({ player, ...getPlayerPosition(tableSize, index / ordered.length, 14) }));
+    const seats = ordered.map((player, index) => ({ player, ...getPlayerPosition(tableSize, -index / ordered.length, 14) }));
     return { seats, currentTurnPlayerSeat: seats.find(({ player }) => player.isCurrentTurn) ?? null };
   }, [game.players, game.player?.gamePlayerId, tableSize]);
 
