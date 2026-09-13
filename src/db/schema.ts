@@ -128,7 +128,11 @@ export const playCard = sqliteTable('play_card', {
 //                            RELATIONS
 // ==================================================================
 
-export const playerRelations = relations(player, ({ many }) => ({ gamePlayers: many(gamePlayer) }));
+export const playerRelations = relations(player, ({ many }) => ({ gamePlayers: many(gamePlayer), leaderboards: many(playerLeaderboard) }));
+
+export const playerLeaderboardRelations = relations(playerLeaderboard, ({ one }) => ({
+  player: one(player, { fields: [playerLeaderboard.playerId], references: [player.id] }),
+}));
 
 export const gameRelations = relations(game, ({ one, many }) => ({
   players: many(gamePlayer, { relationName: 'gamePlayers' }),
