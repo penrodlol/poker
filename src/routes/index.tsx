@@ -39,7 +39,7 @@ function HomePageGameShell({ userId, guildId, channelId }: { userId: string; gui
     mutationFn: () => {
       const players = participants
         .filter((p) => !p.bot)
-        .map((p) => ({ discordId: p.id, username: p.global_name ?? p.nickname ?? p.username, avatarUrl: p.avatar }));
+        .map((p) => ({ discordId: p.id, username: p.username, displayName: p.global_name, avatarUrl: p.avatar }));
       return useStartGameServerFn({ data: { channelId, guildId, players } });
     },
   });

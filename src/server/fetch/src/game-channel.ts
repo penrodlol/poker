@@ -6,7 +6,7 @@ export type GameChannelMessage =
   | { type: Extract<GameChannelMessageType, 'update'>; data: null }
   | { type: Extract<GameChannelMessageType, 'gameover'>; data: GameChannelMessageDataGameOver };
 
-export type GameChannelMessageDataGameOver = Pick<Player, 'discordId' | 'username'>;
+export type GameChannelMessageDataGameOver = Pick<Player, 'discordId' | 'username' | 'displayName'>;
 
 export class GameChannelDurableObject extends Server<Env> {
   static options = { hibernate: true };

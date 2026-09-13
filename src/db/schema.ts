@@ -39,6 +39,7 @@ export const player = sqliteTable('player', {
   id: primaryKey,
   discordId: text('discord_id').notNull().unique(),
   username: text().notNull(),
+  displayName: text('display_name'),
   avatarUrl: text('avatar_url'),
   createdAt: timestamp('created_at'),
 });

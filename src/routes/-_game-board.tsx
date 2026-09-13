@@ -135,7 +135,7 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
               )}
             >
               <Typography weight="bold" className="text-6xl">
-                {gameOver.username} wins!
+                {gameOver.displayName ?? gameOver.username} wins!
               </Typography>
               <Typography color="muted" className="text-2xl">
                 {gameOver.discordId === game.player?.discordId ? 'Congratulations!' : 'Better luck next time bud!'}
@@ -149,7 +149,7 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
             <div key={player.gamePlayerId} style={{ left: `${x}px`, top: `${y}px` }} className="absolute -translate-x-1/2 -translate-y-1/2">
               <Tooltip delay={0}>
                 <Tooltip.Trigger
-                  aria-label={player.username}
+                  aria-label={player.displayName ?? player.username}
                   className="focus-visible:ring-accent relative size-20 rounded-4xl focus-visible:ring-2 focus-visible:outline-none"
                 >
                   <Badge.Anchor>
@@ -183,7 +183,7 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
                 </Tooltip.Trigger>
                 <Tooltip.Content showArrow className="elevation-3 px-4">
                   <Tooltip.Arrow />
-                  <Typography type="body-sm">{player.username}</Typography>
+                  <Typography type="body-sm">{player.displayName ?? player.username}</Typography>
                   <Typography type="body-xs" color="muted" className="-translate-y-1">
                     @{player.username}
                   </Typography>

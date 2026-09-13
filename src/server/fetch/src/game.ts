@@ -37,7 +37,16 @@ export const PASS_GAME_MOVE_ERROR = 'Pass Game Move Failed';
 export const startGameRequestSchema = z.object({
   guildId: z.string().min(1),
   channelId: z.string().min(1),
-  players: z.array(z.object({ discordId: z.string().min(1), username: z.string().min(1), avatarUrl: z.string().nullish() })).min(1),
+  players: z
+    .array(
+      z.object({
+        discordId: z.string().min(1),
+        username: z.string().min(1),
+        displayName: z.string().nullish(),
+        avatarUrl: z.string().nullish(),
+      }),
+    )
+    .min(1),
 });
 export const getGameStateRequestSchema = z.object({ channelId: z.string().min(1), discordId: z.string().min(1) });
 export const playGameMoveRequestSchema = z.object({
@@ -66,7 +75,10 @@ export const startGame = createServerFn({ method: 'POST' })
       const players = await db
         .insert(player)
         .values(data.players)
-        .onConflictDoUpdate({ target: player.discordId, set: { username: sql`excluded.username`, avatarUrl: sql`excluded.avatar_url` } })
+        .onConflictDoUpdate({
+          target: player.discordId,
+          set: { username: sql`excluded.username`, displayName: sql`excluded.display_name`, avatarUrl: sql`excluded.avatar_url` },
+        })
         .returning()
         .then((players) =>
           players
@@ -126,7 +138,7 @@ export const getGameState = createServerFn({ method: 'POST' })
         with: {
           players: {
             columns: { id: true, seat: true, isLockedOut: true, placement: true },
-            with: { player: { columns: { discordId: true, username: true, avatarUrl: true } } },
+            with: { player: { columns: { discordId: true, username: true, displayName: true, avatarUrl: true } } },
             orderBy: (players, { asc }) => asc(players.seat),
           },
           cards: { columns: { id: true, rank: true, suit: true, gamePlayerId: true } },
@@ -144,6 +156,7 @@ export const getGameState = createServerFn({ method: 'POST' })
         seat: p.seat,
         discordId: p.player.discordId,
         username: p.player.username,
+        displayName: p.player.displayName,
         avatarUrl: p.player.avatarUrl,
         isLockedOut: p.isLockedOut,
         placement: p.placement,
@@ -190,7 +203,10 @@ export const playGameMove = createServerFn({ method: 'POST' })
         with: {
           players: {
             columns: { id: true, seat: true, isLockedOut: true, placement: true },
-            with: { player: { columns: { discordId: true, username: true } }, cards: { columns: { id: true, rank: true, suit: true } } },
+            with: {
+              player: { columns: { discordId: true, username: true, displayName: true } },
+              cards: { columns: { id: true, rank: true, suit: true } },
+            },
           },
           plays: { columns: { id: true }, limit: 1 },
           currentPlay: {
@@ -249,7 +265,11 @@ export const playGameMove = createServerFn({ method: 'POST' })
       await db.batch(gameWrites);
 
       if (gameFinished) {
-        const realtimeData: GameChannelMessageDataGameOver = { discordId: data.discordId, username: gamePlayerSelf.player.username };
+        const realtimeData: GameChannelMessageDataGameOver = {
+          discordId: data.discordId,
+          username: gamePlayerSelf.player.username,
+          displayName: gamePlayerSelf.player.displayName,
+        };
         await db.delete(game).where(eq(game.id, currentGame.id));
         await (await getServerByName(env.GameChannelDurableObject, data.channelId)).notify({ type: 'gameover', data: realtimeData });
         return { gameId: currentGame.id, type: gameCardsEvaluated.type, finished: true };
