@@ -1,4 +1,4 @@
-import db, { CARD_RANKS, CARD_SUITS, game, gameCard, gamePlayer, play, playCard, player, type GamePlayer } from '#/db';
+import db, { CARD_RANKS, CARD_SUITS, game, gameCard, gamePlayer, play, playCard, player, playerLeaderboard, type GamePlayer } from '#/db';
 import { evaluateGameHand, gameBeats, sortGameCards } from '#/server/utils/game';
 import { logError } from '#/server/utils/logger';
 import { createServerFn } from '@tanstack/react-start';
@@ -204,7 +204,7 @@ export const playGameMove = createServerFn({ method: 'POST' })
           players: {
             columns: { id: true, seat: true, isLockedOut: true, placement: true },
             with: {
-              player: { columns: { discordId: true, username: true, displayName: true } },
+              player: { columns: { id: true, discordId: true, username: true, displayName: true } },
               cards: { columns: { id: true, rank: true, suit: true } },
             },
           },
@@ -238,7 +238,6 @@ export const playGameMove = createServerFn({ method: 'POST' })
       }
 
       const gameFinished = gamePlayerSelf.cards.length === gameCards.length;
-      const gamePlayerSelfPlacement = gameFinished ? currentGame.players.filter((p) => p.placement !== null).length + 1 : null;
 
       const gamePlayId = crypto.randomUUID();
       const gameWrites: [BatchItem<'sqlite'>, ...Array<BatchItem<'sqlite'>>] = [
@@ -260,8 +259,26 @@ export const playGameMove = createServerFn({ method: 'POST' })
           })
           .where(eq(game.id, currentGame.id)),
       ];
+
       if (gameFinished)
-        gameWrites.push(db.update(gamePlayer).set({ placement: gamePlayerSelfPlacement }).where(eq(gamePlayer.id, gamePlayerSelf.id)));
+        for (const gamePlayer of currentGame.players) {
+          const gamePlayerWon = gamePlayer.id === gamePlayerSelf.id;
+          const gamesWon = gamePlayerWon ? 1 : 0;
+          const gamesLost = gamePlayerWon ? 0 : 1;
+          gameWrites.push(
+            db
+              .insert(playerLeaderboard)
+              .values({ playerId: gamePlayer.player.id, guildId: currentGame.guildId, gamesWon, gamesLost })
+              .onConflictDoUpdate({
+                target: [playerLeaderboard.playerId, playerLeaderboard.guildId],
+                set: {
+                  gamesWon: sql`${playerLeaderboard.gamesWon} + ${gamesWon}`,
+                  gamesLost: sql`${playerLeaderboard.gamesLost} + ${gamesLost}`,
+                },
+              }),
+          );
+        }
+
       await db.batch(gameWrites);
 
       if (gameFinished) {

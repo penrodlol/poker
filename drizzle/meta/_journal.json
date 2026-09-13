@@ -15,6 +15,13 @@
       "when": 1789329055658,
       "tag": "0001_cultured_onslaught",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789332040502,
+      "tag": "0002_furry_goblin_queen",
+      "breakpoints": true
     }
   ]
 }

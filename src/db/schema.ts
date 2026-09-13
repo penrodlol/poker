@@ -44,6 +44,19 @@ export const player = sqliteTable('player', {
   createdAt: timestamp('created_at'),
 });
 
+export const playerLeaderboard = sqliteTable(
+  'player_leaderboard',
+  {
+    id: primaryKey,
+    gamesWon: integer('games_won').notNull().default(0),
+    gamesLost: integer('games_lost').notNull().default(0),
+    guildId: text('guild_id').notNull(),
+    createdAt: timestamp('created_at'),
+    playerId: foreignKey('player_id', () => player.id, { onDelete: 'cascade' }).notNull(),
+  },
+  (table) => [uniqueIndex('player_leaderboard_player_id_guild_id_idx').on(table.playerId, table.guildId)],
+);
+
 export const game = sqliteTable(
   'game',
   {
