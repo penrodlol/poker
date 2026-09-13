@@ -15,8 +15,6 @@ export const getLeaderboardQueryKey = (guildId: string) => ['leaderboard', guild
 export const getLeaderboardQueryOptions = (data: LeaderboardRequest) => ({
   queryKey: getLeaderboardQueryKey(data.guildId),
   queryFn: () => getLeaderboard({ data }),
-  staleTime: 0,
-  gcTime: 0,
 });
 
 export const getLeaderboard = createServerFn({ method: 'POST' })

@@ -1,4 +1,5 @@
 import discord from '#/libs/discord';
+import { getLeaderboardQueryOptions } from '#/server/fetch/src/leaderboard';
 import { Button, Modal, Tooltip } from '@heroui/react';
 import { ArrowClockwiseIcon, InfoIcon, RankingIcon } from '@phosphor-icons/react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,11 +26,15 @@ export default function Header() {
         </Tooltip.Trigger>
         <Tooltip.Content>Reload</Tooltip.Content>
       </Tooltip>
-
       <Modal>
         <Tooltip>
           <Tooltip.Trigger>
-            <Button variant="ghost" size="lg" aria-label="Leaderboard">
+            <Button
+              variant="ghost"
+              size="lg"
+              aria-label="Leaderboard"
+              onMouseEnter={() => discord.guildId && queryClient.query(getLeaderboardQueryOptions({ guildId: discord.guildId }))}
+            >
               <RankingIcon className="size-6 opacity-50" />
             </Button>
           </Tooltip.Trigger>

@@ -1,6 +1,7 @@
 import discord from '#/libs/discord';
 import { gameStateQueryKey, getGameStateQueryOptions, passGameMove, playGameMove, startGame } from '#/server/fetch/src/game';
 import type { GameChannelMessageDataGameOver } from '#/server/fetch/src/game-channel';
+import { getLeaderboardQueryKey } from '#/server/fetch/src/leaderboard';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
@@ -55,7 +56,10 @@ function HomePageGameShell({ userId, guildId, channelId }: { userId: string; gui
   useDiscordRealtime({
     channelId,
     onUpdate: () => queryClient.invalidateQueries({ queryKey: gameStateQueryKey({ discordId: userId, channelId }) }),
-    onGameOver: (winner) => setGameOverWinner(winner),
+    onGameOver: (winner) => {
+      queryClient.invalidateQueries({ queryKey: getLeaderboardQueryKey(guildId) });
+      setGameOverWinner(winner);
+    },
   });
 
   if (data?.status === 'found')
