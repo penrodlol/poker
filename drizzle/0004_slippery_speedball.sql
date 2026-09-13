@@ -1,0 +1,1 @@
+ALTER TABLE `achievement` RENAME COLUMN "logo_url" TO "logo";

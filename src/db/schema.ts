@@ -67,7 +67,7 @@ export const achievement = sqliteTable('achievement', {
   id: primaryKey,
   name: text().notNull().unique(),
   description: text().notNull(),
-  logoUrl: text('logo_url').notNull(),
+  logo: text('logo').notNull(),
   createdAt: timestamp('created_at'),
 });
 
