@@ -3,6 +3,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { HeadContent, Scripts, createRootRouteWithContext } from '@tanstack/react-router';
 import css from '../styles.css?url';
 import { DiscordProvider } from './-_discord';
+import Header from './-_header';
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -20,9 +21,8 @@ function Shell(props: { children: React.ReactNode }) {
       </head>
       <body className="to-surface via-surface-secondary from-surface-tertiary flex min-h-svh flex-col bg-radial">
         <DiscordProvider>
-          <header></header>
+          <Header />
           <main className="flex-1" {...props} />
-          <footer></footer>
         </DiscordProvider>
         <ToastProvider placement="top" />
         <Scripts />
