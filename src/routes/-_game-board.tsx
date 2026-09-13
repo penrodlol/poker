@@ -206,7 +206,7 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
         {!game.isObserver && (
           <div className="flex w-full flex-col items-center justify-center gap-12">
             <div className="flex flex-wrap items-center justify-center gap-2">
-              {playerHand.slice(0, 52 / 4).map((card) => (
+              {playerHand.map((card) => (
                 <Button
                   key={card.id}
                   aria-label={`${card.rank} of ${card.suit}`}
