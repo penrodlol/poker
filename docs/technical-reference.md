@@ -1,8 +1,12 @@
 # Technical Reference
 
-The central technical reference (TRD) for this project — a custom card game built as a **Discord Activity** on a TanStack Start SPA + Cloudflare Workers, with Drizzle + D1. This document is the hub; detailed topics branch out into their own linked docs.
+The central technical reference (TRD) for this project — a custom card game (branded **中国人 POKER**) built as a **Discord Activity** on a TanStack Start SPA + Cloudflare Workers, with Drizzle + D1 and a PartyServer Durable Object for realtime. This document is the hub; detailed topics branch out into their own linked docs.
 
-Related code: [src/libs/discord.ts](../src/libs/discord.ts), [src/server](../src/server), [src/db/schema.ts](../src/db/schema.ts).
+> **Status:** Phases 1–4 are complete — the game is fully playable end-to-end inside Discord with a polished table UI and realtime sync. Only Phase 5 (deploy hardening / portal finalization) remains.
+
+Related code: [src/libs/discord.ts](../src/libs/discord.ts), [src/server](../src/server), [src/db/schema.ts](../src/db/schema.ts), [src/routes](../src/routes), [src/components](../src/components).
+
+Stack: **TanStack Start** (SPA + server functions) · **TanStack React Query** (client data/cache) · **HeroUI** + Tailwind (UI) · **Cloudflare Workers** + **D1** (Drizzle ORM) · **PartyServer** Durable Object (realtime) · **`@discord/embedded-app-sdk`** (Activity bridge).
 
 ---
 
@@ -47,29 +51,47 @@ This is the sequence every session runs through:
 
 ## 3. How the pieces map to the codebase
 
-| Concern                          | Where it lives                                                        | Notes                                                              |
-| -------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| SDK init + auth handshake        | client side (new hook/provider around the router)                     | must run in the **browser**, not the Worker                        |
-| OAuth token exchange             | new server route in [src/server](../src/server)                       | uses `DISCORD_CLIENT_SECRET` — server-only                         |
-| Game API (create/join/play/pass) | server routes                                                         | validates rules from [AGENTS.md](../AGENTS.md), writes via Drizzle |
-| Persistence                      | [src/db/schema.ts](../src/db/schema.ts)                               | already done                                                       |
-| Discord proxy/CSP config         | [wrangler.jsonc](../wrangler.jsonc) + Discord Dev Portal URL mappings | required so the iframe can reach the API and assets                |
+| Concern                          | Where it lives                                                                                                  | Notes                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| SDK singleton + proxy helper     | [src/libs/discord.ts](../src/libs/discord.ts)                                                                   | runs in the **browser**; client id/scopes from `import.meta.env`          |
+| Auth handshake + realtime hooks  | [src/routes/-_discord.tsx](../src/routes/-_discord.tsx) (`DiscordProvider`, `useDiscord`, `useDiscordRealtime`) | provider wraps the app in [\_\_root.tsx](../src/routes/__root.tsx)        |
+| OAuth token exchange             | `getDiscordAccessToken` in [src/server/fetch/src/discord.ts](../src/server/fetch/src/discord.ts)                | `createServerFn`; uses `DISCORD_CLIENT_SECRET` — server-only              |
+| Game API (start/play/pass/state) | [src/server/fetch/src/game.ts](../src/server/fetch/src/game.ts)                                                 | `startGame` / `getGameState` / `playGameMove` / `passGameMove` server fns |
+| Rules engine (pure)              | [src/server/utils/game.ts](../src/server/utils/game.ts)                                                         | `evaluateGameHand` / `gameBeats` / `sortGameCards`                        |
+| Realtime relay                   | [src/server/fetch/src/game-channel.ts](../src/server/fetch/src/game-channel.ts)                                 | `GameChannelDurableObject` (PartyServer) broadcasts `update` / `gameover` |
+| Persistence                      | [src/db/schema.ts](../src/db/schema.ts)                                                                         | Drizzle + D1                                                              |
+| Table / lobby / loading UI       | [src/routes/index.tsx](../src/routes/index.tsx) + `-_game-*.tsx` + [src/components](../src/components)          | HeroUI components, React Query for state                                  |
+| WS routing + CSP rewrite         | [src/server/fetch/index.ts](../src/server/fetch/index.ts)                                                       | `routePartykitRequest` first, then `tanstack.fetch` + CSP header          |
+| Worker entry + DO export         | [src/server/index.ts](../src/server/index.ts)                                                                   | exports `{ fetch }` and re-exports `GameChannelDurableObject`             |
+| Discord proxy/CSP + DO binding   | [wrangler.jsonc](../wrangler.jsonc) + Discord Dev Portal URL mappings                                           | binding/migration for the DO; CSP from `DISCORD_FRAME_ANCESTORS`          |
+
+### Environment variables
+
+| Var                          | Where           | Purpose                                                        |
+| ---------------------------- | --------------- | -------------------------------------------------------------- |
+| `VITE_DISCORD_CLIENT_ID`     | client + server | Public Discord app id (also the `<id>.discordsays.com` host)   |
+| `VITE_DISCORD_CLIENT_SCOPES` | client          | Pipe (`\|`)-delimited OAuth scopes passed to `authorize()`     |
+| `DISCORD_CLIENT_SECRET`      | server-only     | OAuth token exchange — never sent to the client                |
+| `DISCORD_OAUTH_TOKEN_URL`    | server-only     | Discord token endpoint used by `getDiscordAccessToken`         |
+| `DISCORD_FRAME_ANCESTORS`    | server-only     | Full `Content-Security-Policy` value set on every SPA response |
+| `DB`                         | server-only     | D1 binding                                                     |
+| `GameChannelDurableObject`   | server-only     | Durable Object binding for the realtime relay                  |
 
 ---
 
-## 4. Things to fix / decide before building
+## 4. Resolved architecture decisions
 
-- **`discord.ts` runs in the wrong place.** [src/libs/discord.ts](../src/libs/discord.ts) imports `env` from `cloudflare:workers` and constructs `DiscordSDK` there. `DiscordSDK` is a **client-side** SDK and must be instantiated in the browser; `cloudflare:workers` env isn't available client-side. Move SDK init to client code and expose the **client ID** via a Vite public env var (it's public), while keeping the **client secret** server-only.
-- **URL mapping / CSP.** Decide the proxy prefix (Discord commonly uses `/.proxy/`) and register the mappings in the Discord Developer Portal + reflect them in the app's fetch base URL.
-- **Dev experience.** Local dev needs a public tunnel (e.g. `cloudflared`) pointed at the Vite/Worker dev server, with that URL set as the Activity's dev URL in the portal.
-- **Session model.** Decide how a Discord voice channel maps to a `game` (one active game per channel is the natural fit given `game.channel_id`).
+- **SDK init is client-side (resolved).** [src/libs/discord.ts](../src/libs/discord.ts) constructs the `DiscordSDK` singleton in the browser from `import.meta.env.VITE_DISCORD_CLIENT_ID` / `VITE_DISCORD_CLIENT_SCOPES`. The client secret stays server-only in `getDiscordAccessToken`.
+- **URL mapping / CSP (resolved).** The app uses the `/.proxy/` prefix; the Worker sets `Content-Security-Policy` from `DISCORD_FRAME_ANCESTORS` and strips `X-Frame-Options` on every response so the iframe renders. The WebSocket connects through `/.proxy/parties/game-channel-durable-object/<channelId>`.
+- **Dev experience.** Local dev uses a public tunnel (`pnpm cloudflared:tunnel`) pointed at the dev server, set as the Activity's dev URL in the portal.
+- **Session model (resolved).** One active `game` per channel (`game.channel_id` is unique). Launching wipes any prior game for the channel and deals fresh.
 
 ---
 
-## 5. Suggested phased roadmap
+## 5. Phased roadmap
 
-- [x] **Phase 1 — Boot the Activity.** Fix `discord.ts`, add a client-side SDK provider, get `ready()` + `authorize()` + server token exchange + `authenticate()` working; render the authenticated user's name in the SPA. See [Phase 1 — Boot the Activity & Auth Plan](phase-1-boot-activity-auth-plan.md).
-- [x] **Phase 2 — Lobby: upsert players & launch.** Show the participants connected to the Activity instance and a host-only launch button that, when pressed, upserts the connected users as `player`s, creates the `game` for the channel, seats them as `game_player`s (random order), and deals the shuffled deck into `game_card`s. See [Phase 2 — Lobby: Upsert Players & Launch](phase-2-lobby-launch-plan.md).
-- [x] **Phase 3 — Game API + realtime.** `playGameMove` / `passGameMove` / `getGameState` enforce the rules (dealing happens at launch), with realtime sync via a **PartyServer** Durable Object per channel (`GameChannelDurableObject`) that broadcasts an `update` signal; clients refetch on each signal. See [Phase 3 — Game API + Realtime](phase-3-game-api-realtime-plan.md).
-- [ ] **Phase 4 — UI.** Build the table/hand UI and wire it to the API.
+- [x] **Phase 1 — Boot the Activity.** Client-side SDK provider running `ready()` + `authorize()` + server token exchange + `authenticate()`; renders the authenticated user. See [Phase 1 — Boot the Activity & Auth Plan](phase-1-boot-activity-auth-plan.md).
+- [x] **Phase 2 — Lobby & launch.** Lobby lists connected participants and a **Start Game** button that upserts `player`s, creates the channel `game`, seats `game_player`s in random order, and deals the shuffled deck into `game_card`s (guaranteeing the 3♦ is dealt). See [Phase 2 — Lobby: Upsert Players & Launch](phase-2-lobby-launch-plan.md).
+- [x] **Phase 3 — Game API + realtime.** `playGameMove` / `passGameMove` / `getGameState` enforce the rules, with realtime sync via a **PartyServer** Durable Object per channel (`GameChannelDurableObject`) that broadcasts `update` / `gameover` signals; clients refetch via React Query on each signal. See [Phase 3 — Game API + Realtime](phase-3-game-api-realtime-plan.md).
+- [x] **Phase 4 — UI & realtime polish.** Full table UI: oval table with players seated around the perimeter, animated card plays (view transitions), current-turn glow, observer mode, and a game-over overlay with confetti + return-to-menu. See [Phase 4 — UI & Realtime Polish](phase-4-ui-realtime-polish-plan.md).
 - [ ] **Phase 5 — Deploy + portal config.** Finalize URL mappings, CSP, and Activity settings; test in a real voice channel.

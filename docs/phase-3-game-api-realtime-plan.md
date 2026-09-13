@@ -2,7 +2,7 @@
 
 > **Status: ✅ Complete.** Realtime was built with **PartyServer** (a thin ergonomic layer over Cloudflare Durable Objects) rather than a hand-rolled DO. File paths and symbol names throughout this doc have been reconciled with the shipped code.
 
-The goal of Phase 3 (see the roadmap in [technical-reference.md](technical-reference.md#5-suggested-phased-roadmap)) is to make the launched game **playable**: implement the play/pass API that enforces the rules in [AGENTS.md](../AGENTS.md), and push state changes to every connected client in realtime using a **PartyServer Durable Object** per channel.
+The goal of Phase 3 (see the roadmap in [technical-reference.md](technical-reference.md#5-phased-roadmap)) is to make the launched game **playable**: implement the play/pass API that enforces the rules in [AGENTS.md](../AGENTS.md), and push state changes to every connected client in realtime using a **PartyServer Durable Object** per channel.
 
 **Definition of done:** after a game is launched (Phase 2), the seated players can take turns; a `play` (a valid combination that beats the table) or a `pass` is validated server-side, persisted to D1, and every connected client is notified over a WebSocket and re-renders the new state — all through a bare-bones UI.
 
@@ -18,7 +18,7 @@ The goal of Phase 3 (see the roadmap in [technical-reference.md](technical-refer
   - `game_card.game_player_id` — set = in a hand, `null` = played to the table.
   - `play` (`round`, `type`, `is_pass`, `beats_play_id`) + `play_card` (unique `game_card_id`).
   - `CARD_RANKS` (low→high `3…2`) and `CARD_SUITS` (low→high `diamonds…spades`) constants for ordering.
-- **Launch deals + seeds the turn** ([src/server/fetch/src/discord.ts](../src/server/fetch/src/discord.ts)): `startDiscordGame` seats players, deals `game_card`s, guarantees the 3♦ is dealt, seeds `current_turn_player_id` (3♦ holder) + `current_round = 1`, and `notify()`s the channel's PartyServer so lobby clients flip into the game in realtime.
+- **Launch deals + seeds the turn** ([src/server/fetch/src/game.ts](../src/server/fetch/src/game.ts)): `startGame` seats players, deals `game_card`s, guarantees the 3♦ is dealt, seeds `current_turn_player_id` (3♦ holder) + `current_round = 1`, and `notify()`s the channel's PartyServer so lobby clients flip into the game in realtime.
 - **Server-fn pattern** — all server logic uses `createServerFn({ method: 'POST' }).validator(zod).handler(...)`, wrapped in `try/catch` + `logError`.
 - **Fetch handler** ([src/server/fetch/index.ts](../src/server/fetch/index.ts)) delegates every request to `tanstack.fetch` and rewrites CSP/`X-Frame-Options`. This is where a WebSocket upgrade route must be intercepted before delegation.
 - **Worker entry** ([src/server/index.ts](../src/server/index.ts)) exports `{ fetch }`; a Durable Object class must also be exported here.
@@ -69,8 +69,8 @@ flowchart LR
 
 - **Connect**: the client opens a `PartySocket` to the proxied path `/.proxy/parties/game-channel-durable-object/<channelId>` (PartyServer's `parties/:server/:name` route, where `:server` is the kebab-cased binding name). The fetch handler runs `routePartykitRequest(request, env)` first and returns its response when it matches, before delegating to `tanstack.fetch`.
 - **Hibernation**: the `Server` sets `static options = { hibernate: true }` so idle rooms cost nothing.
-- **Notify**: after a successful `startDiscordGame` / `playGameMove` / `passGameMove` D1 write, the server fn resolves the DO with `getServerByName(env.GameChannelDurableObject, channelId)` and calls its `notify()` RPC, which `this.broadcast({ type: 'update' })`s to every socket in the room.
-- **Refetch, don't push**: the broadcast is a _signal_, not the state. On receiving `{ type: 'update' }`, each client re-runs `getGameState`. This keeps the DO tiny (no serialization, no DB binding) and gives every client a correctly-scoped view (each player only sees their own hand).
+- **Notify**: after a successful `startGame` / `playGameMove` / `passGameMove` D1 write, the server fn resolves the DO with `getServerByName(env.GameChannelDurableObject, channelId)` and calls its `notify()` RPC. `notify()` accepts an optional typed message and `this.broadcast(...)`s it to every socket in the room — `{ type: 'update' }` by default, or `{ type: 'gameover', data: { discordId, username } }` when a player wins.
+- **Refetch, don't push**: the `update` broadcast is a _signal_, not the state. On receiving it, each client re-runs `getGameState` (via React Query invalidation). This keeps the DO tiny (no serialization, no DB binding) and gives every client a correctly-scoped view (each player only sees their own hand). The `gameover` message is the one exception — it carries the winner's public identity so clients can render the end-of-game overlay before the game row is gone.
 
 ---
 
@@ -91,9 +91,9 @@ Decisions baked in (see Risks): straights do **not** wrap around; `2` is the hig
 
 ## Work breakdown
 
-### 1. Seed the initial turn at launch ([src/server/fetch/src/discord.ts](../src/server/fetch/src/discord.ts))
+### 1. Seed the initial turn at launch ([src/server/fetch/src/game.ts](../src/server/fetch/src/game.ts))
 
-- In `startDiscordGame`, after dealing, compute the `game_player` who holds the 3♦ and update the game: `current_turn_player_id = <that game_player.id>`, `current_round = 1`. (done)
+- In `startGame`, after dealing, compute the `game_player` who holds the 3♦ and update the game: `current_turn_player_id = <that game_player.id>`, `current_round = 1`. (done)
 
 ### 2. Rules engine ([src/server/utils/game.ts](../src/server/utils/game.ts))
 
@@ -113,8 +113,8 @@ Decisions baked in (see Risks): straights do **not** wrap around; `2` is the hig
   4. If this is the **very first play of the game** (round 1, no prior non-pass plays), require the set to include the 3♦.
   5. If there is a `current_play` to beat, require `gameBeats(candidate, current)`; otherwise (opener/free play) any valid combination is allowed.
   6. Persist: insert `play` (+ `beats_play_id`), insert `play_card`s, set the played `game_card.game_player_id = null`, set `game.current_play_id` to the new play.
-  7. **Win check**: if the player now holds 0 cards, set their `placement` (next finishing rank).
-  8. **Advance turn**: set `current_turn_player_id` to the next non-locked, non-finished seat (clockwise by `seat`).
+  7. **Win check**: if the player now holds 0 cards, set their `placement` and end the game — the game currently **deletes** the `game` row (cascading its children) and `notify()`s a `gameover` message carrying the winner's `{ discordId, username }`. (Ranking out the remaining players into a full placement order is a future enhancement.)
+  8. **Advance turn**: otherwise set `current_turn_player_id` to the next non-locked, non-finished seat (clockwise by `seat`).
   9. Notify the DO.
 - **`passGameMove({ channelId, discordId })`** —
   1. Load game + acting player; reject if not their turn.
@@ -128,7 +128,7 @@ Decisions baked in (see Risks): straights do **not** wrap around; `2` is the hig
 
 ### 4. `GameChannelDurableObject` ([src/server/fetch/src/game-channel.ts](../src/server/fetch/src/game-channel.ts))
 
-- A PartyServer `Server<Env>` subclass with `static options = { hibernate: true }`. A single `notify()` RPC method calls `this.broadcast(JSON.stringify({ type: 'update' }))`; connection lifecycle (accept/close/error) is handled by PartyServer. No D1 binding, no stored state required.
+- A PartyServer `Server<Env>` subclass with `static options = { hibernate: true }`. A single `notify(message?)` RPC method `this.broadcast(JSON.stringify(message))`s the given typed message (defaulting to `{ type: 'update', data: null }`); connection lifecycle (accept/close/error) is handled by PartyServer. No D1 binding, no stored state required. The message union (`update` | `gameover`) is exported from this file and shared with the client.
 
 ### 5. Wire the DO into the Worker
 
@@ -140,8 +140,8 @@ Decisions baked in (see Risks): straights do **not** wrap around; `2` is the hig
 
 ### 6. Bare-bones client
 
-- **Realtime hook** (`useGameSocket` in [src/routes/index.tsx](../src/routes/index.tsx)): open a `PartySocket` (`host: <clientId>.discordsays.com`, `prefix: '.proxy/parties'`, `party: 'game-channel-durable-object'`, `room: channelId`) once ready, and expose a monotonically-increasing "revalidate" tick on each `{ type: 'update' }`. The socket is lifted to `Home` (not `GameBoard`) so lobby players are already connected when the host launches and get pushed into the game.
-- **Game view** ([src/routes/index.tsx](../src/routes/index.tsx)): on ready and on every revalidate tick, call `getGameState`. Render: whose turn it is, each player's remaining card count, the current table play, and the user's own hand as a plain list. Add **Play** (with a minimal card-selection mechanism — checkboxes) and **Pass** buttons that call the new server fns and are disabled when it isn't the user's turn or they're an observer/finished.
+- **Realtime hook** (`useDiscordRealtime` in [src/routes/-_discord.tsx](../src/routes/-_discord.tsx)): open a `PartySocket` (`host: <clientId>.discordsays.com`, `prefix: '.proxy/parties'`, `party: 'game-channel-durable-object'`, `room: channelId`) once ready, and dispatch on each message — `update` → `onUpdate` (the caller invalidates the `gameState` React Query), `gameover` → `onGameOver` (the caller stashes the winner for the overlay). The hook is wired from `HomePageGameShell` in [src/routes/index.tsx](../src/routes/index.tsx) so lobby players are already connected when someone launches and get pushed into the game.
+- **Game view** ([src/routes/index.tsx](../src/routes/index.tsx) + [-_game-board.tsx](../src/routes/-_game-board.tsx)): on ready and on every `update`, React Query re-fetches `getGameState`. Render whose turn it is, each player's remaining card count, the current table play, and the user's own hand, with **Play** / **Pass** buttons that call the server fns and are disabled when it isn't the user's turn or they're an observer/finished. (The polished table presentation is Phase 4.)
 
 ---
 
@@ -174,7 +174,7 @@ sequenceDiagram
 
 - **DO as relay, not authority (decided).** The Durable Object only broadcasts a signal; validation + persistence stay in server fns writing to D1. Simpler, single source of truth, no logic duplication. Trade-off: a client refetch per update (fine at this scale).
 - **Signal, not state, over the wire (decided).** Broadcasting `{ type: 'update' }` (vs. full state) avoids leaking other players' hands and keeps the DO free of DB access.
-- **Turn/round seeding (decided).** `startDiscordGame` will set the initial turn (3♦ holder) and `current_round = 1` so `getGameState` has a valid turn immediately after launch.
+- **Turn/round seeding (decided).** `startGame` sets the initial turn (3♦ holder) and `current_round = 1` so `getGameState` has a valid turn immediately after launch.
 - **First-play 3♦ enforcement (decided).** Required only on the very first play of the game (round 1, no prior non-pass play), matching AGENTS.md.
 - **Straights don't wrap (decided).** Sequential strictly by `CARD_RANKS` index; `2` is the top single. Revisit only if house rules differ.
 - **No transactions on D1 (constraint).** Multi-row mutations are sequential inserts/updates; acceptable given single-writer-per-turn and the DO-serialized notify. A mid-write failure is logged and surfaced as a generic error.
@@ -186,11 +186,11 @@ sequenceDiagram
 
 ## Acceptance checklist
 
-- [x] `startDiscordGame` seeds `current_turn_player_id` (3♦ holder) and `current_round = 1`.
+- [x] `startGame` seeds `current_turn_player_id` (3♦ holder) and `current_round = 1`.
 - [x] `src/server/utils/game.ts` classifies all six hand types and rejects invalid sets; `gameBeats` implements the AGENTS.md promotion table.
 - [x] `playGameMove` enforces turn, ownership, valid hand type, beat/opener rules, and first-play 3♦; persists `play`/`play_card`, empties played cards, and advances the turn.
 - [x] `passGameMove` rejects passing a free play, locks the player out, and ends the round (new round, unlock all, winner leads) when one player remains.
-- [x] Emptying a hand records `placement`; the turn skips finished/locked players.
+- [x] Emptying a hand records `placement`, ends the game (deletes the `game` row), and broadcasts a `gameover` message; mid-game the turn skips finished/locked players.
 - [x] `getGameState` returns only the requesting player's hand plus public per-player counts and the table play.
 - [x] The `GameChannelDurableObject` PartyServer is bound + migrated; WS is routed via `routePartykitRequest`; mutations `notify()` it and all connected clients refetch.
 - [x] Bare-bones UI lets a seated player select cards, **Play** or **Pass**, and see other clients update in realtime.

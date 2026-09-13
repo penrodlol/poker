@@ -135,20 +135,30 @@ Join table linking a `play` to the specific `game_card`s it used (1 card for a s
 | Winner is first to empty hand         | No `game_card` left with their `game_player_id` → set `game_player.placement`             |
 | Placement order for remaining players | `game_player.placement` (1..N)                                                            |
 
+> **Current runtime behavior:** the game currently ends the moment the **first** player empties their hand — `playGameMove` records that player's `placement`, then **deletes** the `game` row (cascading its children) and broadcasts a `gameover` signal with the winner. So placement is only populated for the winner today; ranking out the remaining players is a future enhancement (the schema already supports it via `placement`).
+
 ---
 
-## Suggested indexes
+## Read path
 
-- `player.discord_id` (unique) — lookup by Discord user.
-- `game.channel_id` + `game.status` — find the active game in a channel.
+`getGameState` ([src/server/fetch/src/game.ts](../src/server/fetch/src/game.ts)) is the single client-facing read. It runs one relational `db.query.game.findFirst` (players + their held cards + current table play) and returns a client-safe snapshot: per-player `handCount` / turn / lockout / placement, the current play's type and cards, and **only the requesting player's own hand**. It returns `{ status: 'not-found' }` when the channel has no game, which the client renders as the lobby.
+
+---
+
+## Indexes (as implemented)
+
+- `player.discord_id` — unique; lookup/upsert by Discord user.
+- `game.channel_id` — unique (`game_channel_id_idx`); one game per channel, the primary lookup.
+- `game_player` — unique on (`game_id`, `player_id`) and on (`game_id`, `seat`).
 - `game_card` on (`game_id`, `game_player_id`) — fetch a player's current hand fast.
 - `play` on (`game_id`, `round`, `created_at`) — reconstruct round history in order.
+- `play_card.game_card_id` — unique; a card can only be in one play.
 
 ---
 
 ## Notes / open decisions
 
-- **Card ranks/suits as text vs. integer:** text is human‑readable; if comparison performance matters, add `rank_order` / `suit_order` integer columns to sort directly in SQL.
-- **Spectators / max players:** add a `max_players` column on `game` if you want to cap lobby size.
-- **Soft delete / history:** current design keeps full play history; nothing is hard‑deleted mid‑game.
-- **Undo/redo:** the append‑only `play` + `play_card` log makes replay and audit straightforward.
+- **No `status` column (decided).** There is at most one game per channel (unique `channel_id`); launching wipes the prior game rather than tracking lifecycle state, so a `status` column was dropped.
+- **Card ranks/suits as text vs. integer:** text is human‑readable; ordering for comparisons is derived in game logic from the `CARD_RANKS` / `CARD_SUITS` arrays (index = strength) rather than stored `*_order` columns.
+- **Spectators / max players:** seating is fixed at launch; anyone opening the Activity afterward who isn't in `game_player` is treated as an observer client-side. No `max_players` cap today.
+- **Soft delete / history:** a finished game is hard-deleted (see runtime behavior above); mid-game nothing is deleted and the `play` / `play_card` log is append-only for audit/replay.
