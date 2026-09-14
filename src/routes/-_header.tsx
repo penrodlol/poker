@@ -45,7 +45,7 @@ export default function Header() {
             <Modal.Dialog className="elevation-3 max-w-4xl">
               <Modal.CloseTrigger />
               <Modal.Header>
-                <Modal.Heading className="text-2xl font-bold">中国人 Poker Leadboard</Modal.Heading>
+                <Modal.Heading className="text-2xl font-bold">中国人 Poker Leaderboard</Modal.Heading>
               </Modal.Header>
               <Modal.Body>{discord.guildId && <Leaderboard guildId={discord.guildId} />}</Modal.Body>
               <Modal.Footer>
