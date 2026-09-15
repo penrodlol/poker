@@ -28,13 +28,15 @@ export default function Header() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog className="elevation-3 max-w-2xl">
-              <Modal.CloseTrigger />
+              <Modal.CloseTrigger className="elevation-3" />
               <Modal.Header>
                 <Modal.Heading className="text-2xl font-bold">中国人 Poker Leaderboard</Modal.Heading>
               </Modal.Header>
               <Modal.Body>{discord.guildId && <Leaderboard guildId={discord.guildId} />}</Modal.Body>
               <Modal.Footer>
-                <Button slot="close">Close</Button>
+                <Button slot="close" className="elevation-3">
+                  Close
+                </Button>
               </Modal.Footer>
             </Modal.Dialog>
           </Modal.Container>
@@ -52,7 +54,7 @@ export default function Header() {
         <Modal.Backdrop>
           <Modal.Container>
             <Modal.Dialog className="elevation-3 max-w-2xl">
-              <Modal.CloseTrigger />
+              <Modal.CloseTrigger className="elevation-3" />
               <Modal.Header>
                 <Modal.Heading className="text-2xl font-bold">中国人 Poker Guide</Modal.Heading>
               </Modal.Header>
@@ -60,7 +62,9 @@ export default function Header() {
                 <Guide />
               </Modal.Body>
               <Modal.Footer>
-                <Button slot="close">Close</Button>
+                <Button slot="close" className="elevation-3">
+                  Close
+                </Button>
               </Modal.Footer>
             </Modal.Dialog>
           </Modal.Container>
