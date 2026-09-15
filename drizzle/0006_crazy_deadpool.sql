@@ -1,0 +1,1 @@
+ALTER TABLE `player_leaderboard` DROP COLUMN `games_lost`;

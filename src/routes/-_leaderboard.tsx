@@ -16,7 +16,6 @@ export default function Leaderboard({ guildId }: LeaderboardProps) {
           <Table.Header>
             <Table.Column isRowHeader>Player</Table.Column>
             <Table.Column>Wins</Table.Column>
-            <Table.Column>Loses</Table.Column>
           </Table.Header>
           <Table.Body
             renderEmptyState={() => (
@@ -40,7 +39,6 @@ export default function Leaderboard({ guildId }: LeaderboardProps) {
                   </div>
                 </Table.Cell>
                 <Table.Cell>{player.gamesWon}</Table.Cell>
-                <Table.Cell>{player.gamesLost}</Table.Cell>
               </Table.Row>
             ))}
           </Table.Body>

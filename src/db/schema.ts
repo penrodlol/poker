@@ -56,7 +56,6 @@ export const playerLeaderboard = sqliteTable(
     id: primaryKey,
     guildId: text('guild_id').notNull(),
     gamesWon: integer('games_won').notNull().default(0),
-    gamesLost: integer('games_lost').notNull().default(0),
     createdAt: timestamp('created_at'),
     playerId: foreignKey('player_id', () => player.id, { onDelete: 'cascade' }).notNull(),
   },

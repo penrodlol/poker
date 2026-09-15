@@ -43,6 +43,13 @@
       "when": 1789342416791,
       "tag": "0005_cuddly_blazing_skull",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789431094639,
+      "tag": "0006_crazy_deadpool",
+      "breakpoints": true
     }
   ]
 }
