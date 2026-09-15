@@ -11,7 +11,7 @@ export default function Header() {
 
   return (
     <header className="fixed inset-x-8 top-4 z-50 flex items-center **:[button]:size-12">
-      <Typography color="muted" weight="bold" className="mr-auto opacity-50">
+      <Typography color="muted" weight="bold" className="pointer-events-none mr-auto opacity-50 select-none">
         中国人 POKER
       </Typography>
       <Modal>
