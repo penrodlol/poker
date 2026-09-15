@@ -19,7 +19,7 @@ function Shell(props: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body className="to-surface via-surface-secondary from-surface-tertiary flex min-h-svh flex-col bg-radial">
+      <body className="to-surface-green via-surface-green-secondary from-surface-green-tertiary flex min-h-svh flex-col bg-radial">
         <DiscordProvider>
           <Header />
           <main className="flex-1" {...props} />

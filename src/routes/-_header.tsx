@@ -1,31 +1,16 @@
 import discord from '#/libs/discord';
 import { getLeaderboardQueryOptions } from '#/server/fetch/src/leaderboard';
 import { Button, Modal, Tooltip } from '@heroui/react';
-import { ArrowClockwiseIcon, InfoIcon, RankingIcon } from '@phosphor-icons/react';
+import { InfoIcon, RankingIcon } from '@phosphor-icons/react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useRouter } from '@tanstack/react-router';
 import Guide from './-_guide';
 import Leaderboard from './-_leaderboard';
 
 export default function Header() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   return (
     <header className="fixed top-4 right-8 z-50 flex **:[button]:size-12">
-      <Tooltip>
-        <Tooltip.Trigger>
-          <Button
-            variant="ghost"
-            size="lg"
-            aria-label="Reload"
-            onClick={async () => (queryClient.invalidateQueries(), await router.invalidate(), window.location.reload())}
-          >
-            <ArrowClockwiseIcon className="size-6 opacity-50" />
-          </Button>
-        </Tooltip.Trigger>
-        <Tooltip.Content>Reload</Tooltip.Content>
-      </Tooltip>
       <Modal>
         <Tooltip>
           <Tooltip.Trigger>
@@ -42,7 +27,7 @@ export default function Header() {
         </Tooltip>
         <Modal.Backdrop>
           <Modal.Container>
-            <Modal.Dialog className="elevation-3 max-w-4xl">
+            <Modal.Dialog className="elevation-3 max-w-2xl">
               <Modal.CloseTrigger />
               <Modal.Header>
                 <Modal.Heading className="text-2xl font-bold">中国人 Poker Leaderboard</Modal.Heading>
@@ -66,7 +51,7 @@ export default function Header() {
         </Tooltip>
         <Modal.Backdrop>
           <Modal.Container>
-            <Modal.Dialog className="elevation-3 max-w-4xl">
+            <Modal.Dialog className="elevation-3 max-w-2xl">
               <Modal.CloseTrigger />
               <Modal.Header>
                 <Modal.Heading className="text-2xl font-bold">中国人 Poker Guide</Modal.Heading>

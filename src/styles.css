@@ -2,40 +2,80 @@
 @import '@heroui/styles';
 @import '@fontsource-variable/geist';
 
-:root {
+@theme inline {
   --font-sans: 'Geist Variable', sans-serif;
 
-  --accent: oklch(50.81% 0.1049 165.61);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-background: var(--background);
+  --color-border: var(--border);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-default: var(--default);
+  --color-default-foreground: var(--default-foreground);
+  --color-field-background: var(--field-background);
+  --color-field-border: var(--field-border);
+  --color-field-foreground: var(--field-foreground);
+  --color-field-placeholder: var(--field-placeholder);
+  --color-focus: var(--focus);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-overlay: var(--overlay);
+  --color-overlay-foreground: var(--overlay-foreground);
+  --color-scrollbar: var(--scrollbar);
+  --color-segment: var(--segment);
+  --color-segment-foreground: var(--segment-foreground);
+  --color-separator: var(--separator);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-secondary-foreground: var(--surface-secondary-foreground);
+  --color-surface-tertiary: var(--surface-tertiary);
+  --color-surface-tertiary-foreground: var(--surface-tertiary-foreground);
+  --color-surface-green: var(--surface-green);
+  --color-surface-green-secondary: var(--surface-green-secondary);
+  --color-surface-green-tertiary: var(--surface-green-tertiary);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+}
+
+:root {
+  --accent: oklch(42.03% 0.0875 165.72);
   --accent-foreground: oklch(99.11% 0 0);
-  --background: oklch(12% 0.02 165.61);
-  --border: oklch(28% 0.02 165.61);
-  --danger: oklch(59.4% 0.2046 14.04);
+  --background: oklch(12% 0 165.72);
+  --border: oklch(28% 0 165.72);
+  --danger: oklch(59.4% 0.1967 14.06);
   --danger-foreground: oklch(99.11% 0 0);
-  --default: oklch(27.4% 0.02 165.61);
+  --default: oklch(27.4% 0 165.72);
   --default-foreground: oklch(99.11% 0 0);
-  --field-background: oklch(21.03% 0.04 165.61);
+  --field-background: oklch(21.03% 0 165.72);
   --field-border: transparent;
-  --field-foreground: oklch(99.11% 0.02 165.61);
-  --field-placeholder: oklch(70.5% 0.04 165.61);
-  --focus: oklch(50.81% 0.1049 165.61);
-  --foreground: oklch(99.11% 0.02 165.61);
-  --muted: oklch(70.5% 0.04 165.61);
-  --overlay: oklch(21.03% 0.04 165.61);
-  --overlay-foreground: oklch(99.11% 0.02 165.61);
-  --scrollbar: oklch(70.5% 0.02 165.61);
-  --segment: oklch(39.64% 0.02 165.61);
-  --segment-foreground: oklch(99.11% 0.02 165.61);
-  --separator: oklch(25% 0.02 165.61);
-  --success: oklch(73.29% 0.2012 140.22);
-  --success-foreground: oklch(21.03% 0.0059 140.22);
-  --surface: oklch(21.03% 0.04 165.61);
-  --surface-foreground: oklch(99.11% 0.02 165.61);
-  --surface-secondary: oklch(25.7% 0.03 165.61);
-  --surface-secondary-foreground: oklch(99.11% 0.02 165.61);
-  --surface-tertiary: oklch(27.21% 0.03 165.61);
-  --surface-tertiary-foreground: oklch(99.11% 0.02 165.61);
-  --warning: oklch(82.03% 0.1444 65.75);
-  --warning-foreground: oklch(21.03% 0.0059 65.75);
+  --field-foreground: oklch(99.11% 0 165.72);
+  --field-placeholder: oklch(70.5% 0 165.72);
+  --focus: oklch(42.03% 0.0875 165.72);
+  --foreground: oklch(99.11% 0 165.72);
+  --muted: oklch(70.5% 0 165.72);
+  --overlay: oklch(21.03% 0 165.72);
+  --overlay-foreground: oklch(99.11% 0 165.72);
+  --scrollbar: oklch(70.5% 0 165.72);
+  --segment: oklch(39.64% 0 165.72);
+  --segment-foreground: oklch(99.11% 0 165.72);
+  --separator: oklch(25% 0 165.72);
+  --success: oklch(73.29% 0.1935 140.24);
+  --success-foreground: oklch(21.03% 0.0059 140.24);
+  --surface: oklch(21.03% 0 165.72);
+  --surface-foreground: oklch(99.11% 0 165.72);
+  --surface-secondary: oklch(25.7% 0 165.72);
+  --surface-secondary-foreground: oklch(99.11% 0 165.72);
+  --surface-tertiary: oklch(27.21% 0 165.72);
+  --surface-tertiary-foreground: oklch(99.11% 0 165.72);
+  --surface-green: oklch(21.03% 0.04 165.61);
+  --surface-green-secondary: oklch(25.7% 0.03 165.61);
+  --surface-green-tertiary: oklch(27.21% 0.03 165.61);
+  --warning: oklch(82.03% 0.1388 65.77);
+  --warning-foreground: oklch(21.03% 0.0059 65.77);
 }
 
 @utility elevation-1 {

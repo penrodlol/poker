@@ -72,13 +72,13 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
   }, [selectedPlayingCardIds, setPlayedPlayingCardIds, setSelectedPlayingCardIds, onPlay]);
 
   return (
-    <section className="flex h-svh flex-col items-center justify-center bg-radial from-neutral-800 to-neutral-950 p-12">
+    <section className="from-surface-secondary to-background via-surface flex h-svh flex-col items-center justify-center bg-radial p-12">
       <div className="flex min-h-0 w-full max-w-[calc(var(--container-7xl)+var(--spacing)*20)] flex-1 flex-col items-center justify-center gap-20">
         <Surface
           ref={tableRef}
           className={cn(
             'elevation-3 relative max-h-180 min-h-130 w-full flex-1 rounded-full',
-            'from-surface-tertiary via-surface-secondary to-surface border-28 border-[oklch(0.3541_0.0182_47.82)] bg-radial',
+            'to-surface-green via-surface-green-secondary from-surface-green-tertiary border-28 border-[oklch(0.3541_0.0182_47.82)] bg-radial',
             'before:absolute before:-inset-4 before:rounded-[inherit] before:border-4 before:border-white/5 before:content-[""]',
           )}
         >
@@ -87,9 +87,8 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
             color="muted"
             weight="bold"
             className={cn(
-              'pointer-events-none absolute left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl opacity-10 select-none',
-              'motion-safe:transition-[top]',
-              game.currentPlay || playedPlayingCardIds.length ? 'top-24' : 'top-1/2',
+              'pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-6xl opacity-10 select-none motion-safe:transition-opacity',
+              ((game.currentPlay?.cards.length ?? 0) > 0 || playedPlayingCardIds.length > 0) && 'opacity-0',
             )}
           >
             中国人 POKER
@@ -159,13 +158,13 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
                       username={player.username}
                       avatarHash={player.avatarUrl}
                       className={cn(
-                        'elevation-3 pointer-events-none size-20 rounded-4xl select-none *:bg-white',
+                        'elevation-3 pointer-events-none size-20 rounded-4xl select-none',
                         (!player.isCurrentTurn || player.isLockedOut || (gameOver && gameOver?.discordId !== player.discordId)) &&
                           'brightness-20 grayscale',
                       )}
                     />
                     {player.isLockedOut && (
-                      <Typography weight="bold" className="text-danger absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                      <Typography weight="bold" className="text-muted absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                         Pass
                       </Typography>
                     )}
@@ -196,8 +195,8 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
               <div
                 style={{ top: playerSeats.currentTurnPlayerSeat.y, left: playerSeats.currentTurnPlayerSeat.x }}
                 className={cn(
-                  'absolute size-96 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl',
-                  'from-accent bg-radial to-transparent to-60% motion-safe:animate-pulse',
+                  'absolute size-32 -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl',
+                  'motionx-safe:animate-pulse bg-white/80 motion-safe:animate-pulse',
                 )}
               />
             </div>
@@ -206,7 +205,7 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
         {!game.isObserver && (
           <div className="flex w-full flex-col items-center justify-center gap-12">
             <div className="flex flex-wrap items-center justify-center gap-2">
-              {playerHand.map((card) => (
+              {playerHand.slice(0, 52 / 4).map((card) => (
                 <Button
                   key={card.id}
                   aria-label={`${card.rank} of ${card.suit}`}
