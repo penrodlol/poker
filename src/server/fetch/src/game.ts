@@ -264,17 +264,13 @@ export const playGameMove = createServerFn({ method: 'POST' })
         for (const gamePlayer of currentGame.players) {
           const gamePlayerWon = gamePlayer.id === gamePlayerSelf.id;
           const gamesWon = gamePlayerWon ? 1 : 0;
-          const gamesLost = gamePlayerWon ? 0 : 1;
           gameWrites.push(
             db
               .insert(playerLeaderboard)
-              .values({ playerId: gamePlayer.player.id, guildId: currentGame.guildId, gamesWon, gamesLost })
+              .values({ playerId: gamePlayer.player.id, guildId: currentGame.guildId, gamesWon })
               .onConflictDoUpdate({
                 target: [playerLeaderboard.playerId, playerLeaderboard.guildId],
-                set: {
-                  gamesWon: sql`${playerLeaderboard.gamesWon} + ${gamesWon}`,
-                  gamesLost: sql`${playerLeaderboard.gamesLost} + ${gamesLost}`,
-                },
+                set: { gamesWon: sql`${playerLeaderboard.gamesWon} + ${gamesWon}` },
               }),
           );
         }
