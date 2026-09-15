@@ -1,6 +1,6 @@
 import discord from '#/libs/discord';
 import { getLeaderboardQueryOptions } from '#/server/fetch/src/leaderboard';
-import { Button, Modal, Tooltip } from '@heroui/react';
+import { Button, Modal, Tooltip, Typography } from '@heroui/react';
 import { InfoIcon, RankingIcon } from '@phosphor-icons/react';
 import { useQueryClient } from '@tanstack/react-query';
 import Guide from './-_guide';
@@ -10,7 +10,10 @@ export default function Header() {
   const queryClient = useQueryClient();
 
   return (
-    <header className="fixed top-4 right-8 z-50 flex **:[button]:size-12">
+    <header className="fixed inset-x-8 top-4 z-50 flex items-center **:[button]:size-12">
+      <Typography color="muted" weight="bold" className="mr-auto opacity-50">
+        中国人 POKER
+      </Typography>
       <Modal>
         <Tooltip>
           <Tooltip.Trigger>
