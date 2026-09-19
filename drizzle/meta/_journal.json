@@ -71,6 +71,13 @@
       "when": 1789852001579,
       "tag": "0009_thin_wallflower",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1789852178309,
+      "tag": "0010_uneven_kinsey_walden",
+      "breakpoints": true
     }
   ]
 }

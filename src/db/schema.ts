@@ -50,8 +50,8 @@ export const rank = sqliteTable('rank', {
   id: primaryKey,
   name: text().notNull().unique(),
   description: text().notNull(),
+  value: integer().notNull(),
   logo: text('logo').notNull(),
-  order: integer().notNull(),
   createdAt: timestamp('created_at'),
 });
 
