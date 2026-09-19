@@ -64,6 +64,13 @@
       "when": 1789851570426,
       "tag": "0008_silent_stick",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1789852001579,
+      "tag": "0009_thin_wallflower",
+      "breakpoints": true
     }
   ]
 }

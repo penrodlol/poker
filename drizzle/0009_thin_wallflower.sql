@@ -1,0 +1,1 @@
+ALTER TABLE `rank` RENAME COLUMN "logo_url" TO "logo";
