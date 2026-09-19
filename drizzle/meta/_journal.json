@@ -50,6 +50,13 @@
       "when": 1789431094639,
       "tag": "0006_crazy_deadpool",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1789850547929,
+      "tag": "0007_same_the_renegades",
+      "breakpoints": true
     }
   ]
 }

@@ -6,10 +6,6 @@ export type Player = typeof player.$inferSelect;
 export type Players = Array<Player>;
 export type PlayerLeaderboard = typeof playerLeaderboard.$inferSelect;
 export type PlayerLeaderboards = Array<PlayerLeaderboard>;
-export type Achievement = typeof achievement.$inferSelect;
-export type Achievements = Array<Achievement>;
-export type PlayerAchievement = typeof playerAchievement.$inferSelect;
-export type PlayerAchievements = Array<PlayerAchievement>;
 export type Game = typeof game.$inferSelect;
 export type Games = Array<Game>;
 export type GamePlayer = typeof gamePlayer.$inferSelect;
@@ -60,28 +56,6 @@ export const playerLeaderboard = sqliteTable(
     playerId: foreignKey('player_id', () => player.id, { onDelete: 'cascade' }).notNull(),
   },
   (table) => [uniqueIndex('player_leaderboard_player_id_guild_id_idx').on(table.playerId, table.guildId)],
-);
-
-export const achievement = sqliteTable('achievement', {
-  id: primaryKey,
-  name: text().notNull().unique(),
-  description: text().notNull(),
-  logo: text('logo').notNull(),
-  createdAt: timestamp('created_at'),
-});
-
-export const playerAchievement = sqliteTable(
-  'player_achievement',
-  {
-    id: primaryKey,
-    guildId: text('guild_id').notNull(),
-    createdAt: timestamp('created_at'),
-    playerId: foreignKey('player_id', () => player.id, { onDelete: 'cascade' }).notNull(),
-    achievementId: foreignKey('achievement_id', () => achievement.id, { onDelete: 'cascade' }).notNull(),
-  },
-  (table) => [
-    uniqueIndex('player_achievement_player_id_guild_id_achievement_id_idx').on(table.playerId, table.guildId, table.achievementId),
-  ],
 );
 
 export const game = sqliteTable(
@@ -158,20 +132,10 @@ export const playCard = sqliteTable('play_card', {
 export const playerRelations = relations(player, ({ many }) => ({
   gamePlayers: many(gamePlayer),
   leaderboards: many(playerLeaderboard),
-  achievements: many(playerAchievement),
 }));
 
 export const playerLeaderboardRelations = relations(playerLeaderboard, ({ one }) => ({
   player: one(player, { fields: [playerLeaderboard.playerId], references: [player.id] }),
-}));
-
-export const achievementRelations = relations(achievement, ({ many }) => ({
-  playerAchievements: many(playerAchievement),
-}));
-
-export const playerAchievementRelations = relations(playerAchievement, ({ one }) => ({
-  player: one(player, { fields: [playerAchievement.playerId], references: [player.id] }),
-  achievement: one(achievement, { fields: [playerAchievement.achievementId], references: [achievement.id] }),
 }));
 
 export const gameRelations = relations(game, ({ one, many }) => ({
