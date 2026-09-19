@@ -57,6 +57,13 @@
       "when": 1789850547929,
       "tag": "0007_same_the_renegades",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1789851570426,
+      "tag": "0008_silent_stick",
+      "breakpoints": true
     }
   ]
 }

@@ -46,6 +46,15 @@ export const player = sqliteTable('player', {
   createdAt: timestamp('created_at'),
 });
 
+export const rank = sqliteTable('rank', {
+  id: primaryKey,
+  name: text().notNull().unique(),
+  description: text().notNull(),
+  logoUrl: text('logo_url').notNull(),
+  order: integer().notNull(),
+  createdAt: timestamp('created_at'),
+});
+
 export const playerLeaderboard = sqliteTable(
   'player_leaderboard',
   {
@@ -54,6 +63,7 @@ export const playerLeaderboard = sqliteTable(
     gamesWon: integer('games_won').notNull().default(0),
     createdAt: timestamp('created_at'),
     playerId: foreignKey('player_id', () => player.id, { onDelete: 'cascade' }).notNull(),
+    rankId: foreignKey('rank_id', () => rank.id, { onDelete: 'cascade' }),
   },
   (table) => [uniqueIndex('player_leaderboard_player_id_guild_id_idx').on(table.playerId, table.guildId)],
 );
@@ -134,8 +144,13 @@ export const playerRelations = relations(player, ({ many }) => ({
   leaderboards: many(playerLeaderboard),
 }));
 
+export const rankRelations = relations(rank, ({ many }) => ({
+  playerLeaderboards: many(playerLeaderboard),
+}));
+
 export const playerLeaderboardRelations = relations(playerLeaderboard, ({ one }) => ({
   player: one(player, { fields: [playerLeaderboard.playerId], references: [player.id] }),
+  rank: one(rank, { fields: [playerLeaderboard.rankId], references: [rank.id] }),
 }));
 
 export const gameRelations = relations(game, ({ one, many }) => ({
