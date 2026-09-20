@@ -4,6 +4,8 @@ import { index, integer, SQLiteColumnBuilder, sqliteTable, text, uniqueIndex } f
 
 export type Player = typeof player.$inferSelect;
 export type Players = Array<Player>;
+export type Rank = typeof rank.$inferSelect;
+export type Ranks = Array<Rank>;
 export type PlayerLeaderboard = typeof playerLeaderboard.$inferSelect;
 export type PlayerLeaderboards = Array<PlayerLeaderboard>;
 export type Game = typeof game.$inferSelect;
