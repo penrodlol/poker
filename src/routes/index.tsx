@@ -38,9 +38,7 @@ function HomePageGameShell({ userId, guildId, channelId }: { userId: string; gui
   const { mutate: handleStartGame } = useMutation({
     onError: () => setIsStarting(false),
     mutationFn: () => {
-      const players = participants
-        .filter((p) => !p.bot)
-        .map((p) => ({ discordId: p.id, username: p.username, displayName: p.global_name, avatarUrl: p.avatar }));
+      const players = participants.map((p) => ({ discordId: p.id, username: p.username, displayName: p.global_name, avatarUrl: p.avatar }));
       return useStartGameServerFn({ data: { channelId, guildId, players } });
     },
   });

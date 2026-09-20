@@ -7,7 +7,7 @@ import { useDiscord } from './-_discord';
 export type GameStartProps = { isPending: boolean; onStartGame: () => void };
 
 export default function GameStart({ isPending, onStartGame }: GameStartProps) {
-  const { participants } = useDiscord();
+  const { user, participants } = useDiscord();
 
   return (
     <section
@@ -37,39 +37,39 @@ export default function GameStart({ isPending, onStartGame }: GameStartProps) {
             <Typography weight="bold">Players</Typography>
             <Chip variant="soft" color="accent" className="elevation-3">
               <UsersIcon />
-              <Chip.Label>{participants.filter((participant) => !participant.bot).length} in lobby</Chip.Label>
+              <Chip.Label>{participants.length} in lobby</Chip.Label>
             </Chip>
           </div>
           <div>
-            {participants
-              .filter((participant) => !participant.bot)
-              .map((participant) => (
-                <Surface
-                  key={participant.id}
-                  variant="transparent"
-                  className="flex flex-wrap items-center gap-4 px-4 py-2 not-last:border-b"
-                >
-                  <PlayerAvatar id={participant.id} avatarHash={participant.avatar} username={participant.username} />
-                  <div className="flex flex-col">
-                    <Typography type="body-sm" truncate>
-                      {participant.global_name ?? participant.username}
-                    </Typography>
-                    <Typography type="body-xs" color="muted" truncate className="-translate-y-1">
-                      @{participant.username}
-                    </Typography>
-                  </div>
-                </Surface>
-              ))}
+            {participants.map((participant) => (
+              <Surface key={participant.id} variant="transparent" className="flex flex-wrap items-center gap-4 px-4 py-2 not-last:border-b">
+                <PlayerAvatar id={participant.id} avatarHash={participant.avatar} username={participant.username} />
+                <div className="flex flex-col">
+                  <Typography type="body-sm" truncate>
+                    {participant.global_name ?? participant.username}
+                  </Typography>
+                  <Typography type="body-xs" color="muted" truncate className="-translate-y-1">
+                    @{participant.username}
+                  </Typography>
+                </div>
+              </Surface>
+            ))}
           </div>
         </Surface>
-        <Button size="lg" variant="primary" className="elevation-3 w-full lg:w-1/2" isPending={isPending} onClick={onStartGame}>
-          {({ isPending }) => (
-            <>
-              {isPending ? <Spinner color="current" size="sm" /> : null}
-              {isPending ? 'Starting Game...' : 'Start Game'}
-            </>
-          )}
-        </Button>
+        {!!user && participants[0]?.id === user.id ? (
+          <Button size="lg" variant="primary" className="elevation-3 w-full lg:w-1/2" isPending={isPending} onClick={onStartGame}>
+            {({ isPending }) => (
+              <>
+                {isPending ? <Spinner color="current" size="sm" /> : null}
+                {isPending ? 'Starting Game...' : 'Start Game'}
+              </>
+            )}
+          </Button>
+        ) : (
+          <Typography color="muted" className="text-center motion-safe:animate-pulse">
+            Waiting for {participants[0]?.global_name ?? participants[0]?.username ?? 'the host'} to start the game...
+          </Typography>
+        )}
       </div>
     </section>
   );

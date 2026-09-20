@@ -50,8 +50,19 @@ export const useDiscordRealtime = ({ channelId, onUpdate, onGameOver }: UseDisco
 
 export function DiscordProvider(props: { children: React.ReactNode }) {
   const started = useRef(false);
+  const participantIds = useRef<Array<string>>([]);
   const useGetDiscordAccessTokenServerFn = useServerFn(getDiscordAccessToken);
   const [state, setState] = useState<DiscordContextValue>({ status: 'loading', user: null, participants: [], error: null });
+
+  const getParticipantsOrdered = (participants: Array<DiscordParticipant>) => {
+    participants = participants.filter((participant) => !participant.bot);
+    participantIds.current = participantIds.current.filter((id) => participants.some((participant) => participant.id === id));
+    for (const participant of participants)
+      if (!participantIds.current.includes(participant.id)) participantIds.current.push(participant.id);
+    return participantIds.current
+      .map((id) => participants.find((participant) => participant.id === id))
+      .filter((participant) => !!participant);
+  };
 
   useEffect(() => {
     if (started.current) return;
@@ -70,9 +81,11 @@ export function DiscordProvider(props: { children: React.ReactNode }) {
         const { user } = await discord.commands.authenticate({ access_token });
 
         const { participants } = await discord.commands.getInstanceConnectedParticipants();
-        setState({ status: 'ready', user, participants, error: null });
+        setState({ status: 'ready', user, participants: getParticipantsOrdered(participants), error: null });
 
-        discord.subscribe('ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE', ({ participants }) => setState((prev) => ({ ...prev, participants })));
+        discord.subscribe('ACTIVITY_INSTANCE_PARTICIPANTS_UPDATE', ({ participants }) =>
+          setState((prev) => ({ ...prev, participants: getParticipantsOrdered(participants) })),
+        );
       } catch (error) {
         const message = error instanceof Error ? error.message : typeof error === 'string' ? error : JSON.stringify(error);
         setState({ status: 'error', user: null, participants: [], error: new Error(message) });
