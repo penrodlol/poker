@@ -143,7 +143,7 @@ export const getGameState = createServerFn({ method: 'POST' })
           },
           cards: { columns: { id: true, rank: true, suit: true, gamePlayerId: true } },
           currentPlay: {
-            columns: { type: true, round: true },
+            columns: { type: true, round: true, gamePlayerId: true },
             with: { cards: { with: { gameCard: { columns: { rank: true, suit: true } } } } },
           },
         },
@@ -173,7 +173,9 @@ export const getGameState = createServerFn({ method: 'POST' })
       const gameCurrentPlayCards = sortGameCards(
         currentGame.currentPlay?.cards.map((c) => ({ rank: c.gameCard.rank, suit: c.gameCard.suit })) ?? [],
       );
-      const gameCurrentPlay = currentGame.currentPlay ? { type: currentGame.currentPlay.type, cards: gameCurrentPlayCards } : null;
+      const gameCurrentPlay = currentGame.currentPlay
+        ? { type: currentGame.currentPlay.type, gamePlayerId: currentGame.currentPlay.gamePlayerId, cards: gameCurrentPlayCards }
+        : null;
       const gameIsFreePlay = !currentGame.currentPlay || currentGame.currentPlay.round !== currentGame.currentRound;
 
       return {

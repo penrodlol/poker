@@ -58,6 +58,12 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
     return { seats, currentTurnPlayerSeat: seats.find(({ player }) => player.isCurrentTurn) ?? null };
   }, [game.players, game.player?.gamePlayerId, tableSize]);
 
+  const currentPlayOrigin = useMemo(() => {
+    const playerSeat = playerSeats.seats.find(({ player }) => player.gamePlayerId === game.currentPlay?.gamePlayerId);
+    if (!playerSeat || playerSeat.player.gamePlayerId === game.player?.gamePlayerId) return null;
+    return { x: playerSeat.x - tableSize.width / 2, y: playerSeat.y - tableSize.height / 2 };
+  }, [playerSeats.seats, game.currentPlay?.gamePlayerId, game.player?.gamePlayerId, tableSize]);
+
   const selectPlayingCards = useCallback(() => {
     if (!selectedPlayingCardIds.length) return;
     setIsPlaying(true);
@@ -96,10 +102,16 @@ export default function GameBoard({ game, gameOver, onPlay, onPass, onReturnToMe
           {(game.currentPlay?.cards.length ?? 0) > 0 && (
             <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
               <div
+                key={currentPlayCards}
+                style={
+                  currentPlayOrigin
+                    ? ({ '--x': `${currentPlayOrigin.x}px`, '--y': `${currentPlayOrigin.y}px` } as React.CSSProperties)
+                    : undefined
+                }
                 className={cn(
-                  'relative flex gap-2',
-                  playedPlayingCardIds.length > 0 &&
-                    'translate-x-10 opacity-0 motion-safe:transition-[opacity,translate] starting:translate-0 starting:opacity-100',
+                  'relative flex gap-2 motion-safe:transition-[opacity,translate]',
+                  playedPlayingCardIds.length > 0 && 'translate-x-10 opacity-0 starting:translate-0 starting:opacity-100',
+                  currentPlayOrigin && 'starting:[translate:var(--x)_var(--y)] starting:opacity-0',
                 )}
               >
                 {game.currentPlay?.cards.map((card) => (
